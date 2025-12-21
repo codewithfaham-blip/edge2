@@ -68,25 +68,24 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 blur-3xl rounded-full" />
         
         <div className="mb-10 text-center relative">
-          <h2 className="text-3xl font-bold mb-3 tracking-tight">
+          <h2 className="text-4xl font-bold mb-3 tracking-tight text-white">
             {mode === 'login' ? 'Welcome Back' : 'Join the Elite'}
           </h2>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 text-sm font-medium">
             {mode === 'login' ? 'Sign in to access your dashboard' : 'Create your secure investment account'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 relative">
+        <form onSubmit={handleSubmit} className="space-y-8 relative">
           {mode === 'register' && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
                 <input
                   required
                   type="text"
                   placeholder="John Doe"
-                  className="w-full bg-[#141922] border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-white focus:border-blue-500 outline-none transition-all placeholder:text-gray-700"
+                  className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
@@ -94,30 +93,28 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
               <input
                 required
                 type="email"
                 placeholder="name@provider.com"
-                className="w-full bg-[#141922] border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-white focus:border-blue-500 outline-none transition-all placeholder:text-gray-700"
+                className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
               <input
                 required
                 type="password"
                 placeholder="••••••••"
-                className="w-full bg-[#141922] border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-white focus:border-blue-500 outline-none transition-all placeholder:text-gray-700"
+                className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
@@ -125,14 +122,13 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
           </div>
 
           {mode === 'register' && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Referral Code (Optional)</label>
               <div className="relative">
-                <Share2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
                 <input
                   type="text"
                   placeholder="CODE123"
-                  className="w-full bg-[#141922] border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-white focus:border-blue-500 outline-none transition-all placeholder:text-gray-700"
+                  className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium"
                   value={formData.referralCode}
                   onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
                 />
@@ -140,48 +136,43 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
             </div>
           )}
 
-          {error && <p className="text-red-500 text-xs font-bold text-center bg-red-500/10 py-3 rounded-xl border border-red-500/20">{error}</p>}
+          {error && <p className="text-red-500 text-xs font-bold text-center bg-red-500/10 py-4 rounded-2xl border border-red-500/20">{error}</p>}
 
           <button
             disabled={loading}
             type="submit"
-            className="w-full py-5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 rounded-3xl font-bold text-white transition-all shadow-xl shadow-blue-900/30 flex items-center justify-center gap-2 group"
+            className="w-full py-5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 rounded-[24px] font-bold text-white transition-all shadow-2xl shadow-blue-900/50 flex items-center justify-center gap-3 group text-lg"
           >
-            {loading ? 'Processing...' : mode === 'login' ? 'Sign In' : 'Create Account'}
-            {!loading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+            {loading ? 'Processing...' : (
+               <div className="flex items-center gap-2">
+                 <span>{mode === 'login' ? 'Sign In' : 'Create Account'}</span>
+                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+               </div>
+            )}
           </button>
         </form>
 
-        <div className="mt-8 text-center">
-          <p className="text-gray-500 text-sm">
+        <div className="mt-10 text-center">
+          <p className="text-gray-500 text-sm font-medium">
             {mode === 'login' ? (
-              <>Don't have an account? <Link to="/register" className="text-blue-500 font-bold hover:underline">Register now</Link></>
+              <>Don't have an account? <Link to="/register" className="text-blue-500 font-bold hover:underline ml-1">Register now</Link></>
             ) : (
-              <>Already have an account? <Link to="/login" className="text-blue-500 font-bold hover:underline">Sign in</Link></>
+              <>Already have an account? <Link to="/login" className="text-blue-500 font-bold hover:underline ml-1">Sign in</Link></>
             )}
           </p>
-        </div>
-
-        <div className="mt-10 pt-8 border-t border-white/5">
-           <div className="flex items-center gap-4 text-gray-600">
-             <div className="p-2 bg-white/5 rounded-xl"><ShieldCheck className="w-5 h-5 text-blue-500" /></div>
-             <p className="text-[10px] leading-relaxed uppercase tracking-widest font-bold">
-               Secured by 256-bit AES<br />Military-Grade Encryption
-             </p>
-           </div>
         </div>
       </div>
 
       {/* Auto-fill Credentials Section */}
       <div className="mt-12 w-full max-w-sm">
-        <div className="p-6 bg-[#0e121a] rounded-[32px] border border-blue-500/10 shadow-xl relative overflow-hidden group/box">
+        <div className="p-8 bg-[#0e121a] rounded-[32px] border border-blue-500/10 shadow-xl relative overflow-hidden group/box">
           <div className="absolute inset-0 bg-blue-600/5 opacity-0 group-hover/box:opacity-100 transition-opacity" />
           <p className="font-bold text-blue-500 uppercase tracking-[0.2em] text-[10px] text-center mb-6 relative">Quick Access Demo Credentials</p>
           
-          <div className="space-y-3 relative">
+          <div className="space-y-4 relative">
             <button 
               onClick={() => autoFill('admin')}
-              className="w-full group flex items-center justify-between p-4 bg-[#141922] border border-white/5 rounded-2xl hover:border-blue-500/40 hover:bg-blue-600/5 transition-all"
+              className="w-full group flex items-center justify-between p-5 bg-[#11141b] border border-white/5 rounded-2xl hover:border-blue-500/40 hover:bg-blue-600/5 transition-all"
             >
               <div className="text-left">
                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-blue-400">Admin Account</p>
@@ -194,7 +185,7 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
 
             <button 
               onClick={() => autoFill('user')}
-              className="w-full group flex items-center justify-between p-4 bg-[#141922] border border-white/5 rounded-2xl hover:border-blue-500/40 hover:bg-blue-600/5 transition-all"
+              className="w-full group flex items-center justify-between p-5 bg-[#11141b] border border-white/5 rounded-2xl hover:border-blue-500/40 hover:bg-blue-600/5 transition-all"
             >
               <div className="text-left">
                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-blue-400">Standard User</p>
@@ -205,8 +196,6 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
               </div>
             </button>
           </div>
-          
-          <p className="mt-4 text-center text-[9px] text-gray-600 font-medium italic">Click a credential above to automatically fill the form.</p>
         </div>
       </div>
     </div>
