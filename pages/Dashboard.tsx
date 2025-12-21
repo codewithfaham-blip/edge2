@@ -2,7 +2,7 @@
 import React from 'react';
 import { useApp } from '../store/AppContext';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, Activity, PieChart as PieChartIcon, Clock, CheckCircle2 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Activity, PieChart as PieChartIcon, Clock, CheckCircle2, Users } from 'lucide-react';
 import { TransactionType } from '../types';
 
 export const UserDashboard = () => {
@@ -29,19 +29,20 @@ export const UserDashboard = () => {
     { label: 'Total Earnings', value: `$${(currentUser.balance + currentUser.totalWithdrawn - 100).toLocaleString()}`, icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
     { label: 'Total Withdrawn', value: `$${currentUser.totalWithdrawn.toLocaleString()}`, icon: ArrowDownRight, color: 'text-purple-500', bg: 'bg-purple-500/10' },
     { label: 'Last Profit', value: '+$12.50', icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: 'Referral Earnings', value: '$0.00', icon: Users, color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
   ];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Stats Grid - Updated to xl:grid-cols-5 to accommodate the new card */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {stats.map((s, i) => (
-          <div key={i} className="bg-[#0e121a] border border-gray-800 p-6 rounded-3xl hover:border-gray-700 transition-all">
+          <div key={i} className="bg-[#0e121a] border border-gray-800 p-6 rounded-3xl hover:border-gray-700 transition-all group">
             <div className="flex justify-between items-start mb-4">
-              <div className={`p-3 rounded-2xl ${s.bg}`}>
+              <div className={`p-3 rounded-2xl ${s.bg} group-hover:scale-110 transition-transform`}>
                 <s.icon className={`w-6 h-6 ${s.color}`} />
               </div>
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{s.label}</span>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{s.label}</span>
             </div>
             <h3 className="text-2xl font-bold text-white font-mono">{s.value}</h3>
           </div>
