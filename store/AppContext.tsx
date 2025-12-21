@@ -1,7 +1,16 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { User, InvestmentPlan, Investment, Transaction, UserRole, TransactionType, TransactionStatus } from '../types';
 import { INITIAL_PLANS, MOCK_USERS } from '../constants';
+
+interface PlatformStats {
+  totalUsers: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalInvested: number;
+  pendingWithdrawals: number;
+  platformBalance: number;
+}
 
 interface AppContextType {
   currentUser: User | null;
@@ -9,6 +18,7 @@ interface AppContextType {
   plans: InvestmentPlan[];
   investments: Investment[];
   transactions: Transaction[];
+  platformStats: PlatformStats;
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
   register: (name: string, email: string, referralCode?: string) => Promise<boolean>;
@@ -21,11 +31,12 @@ interface AppContextType {
   adminUpdatePlan: (plan: InvestmentPlan) => void;
   adminDeletePlan: (id: string) => void;
   adminCreatePlan: (plan: Omit<InvestmentPlan, 'id'>) => void;
+  debugTriggerProfit: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const SIMULATED_DAY_MS = 60000; // 1 minute = 1 day
+const SIMULATED_DAY_MS = 60000; // 1 minute = 1 day in simulator
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -53,6 +64,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Derived Platform Stats for Admin
+  const platformStats = useMemo(() => {
+    const stats: PlatformStats = {
+      totalUsers: users.length,
+      totalDeposits: transactions.filter(t => t.type === TransactionType.DEPOSIT && t.status === TransactionStatus.COMPLETED).reduce((a, b) => a + b.amount, 0),
+      totalWithdrawals: transactions.filter(t => t.type === TransactionType.WITHDRAWAL && t.status === TransactionStatus.COMPLETED).reduce((a, b) => a + b.amount, 0),
+      totalInvested: investments.reduce((a, b) => a + b.amount, 0),
+      pendingWithdrawals: transactions.filter(t => t.type === TransactionType.WITHDRAWAL && t.status === TransactionStatus.PENDING).length,
+      platformBalance: users.reduce((a, b) => a + b.balance, 0),
+    };
+    return stats;
+  }, [users, transactions, investments]);
+
   // Sync state with local storage
   useEffect(() => {
     localStorage.setItem('hyip_current_user', JSON.stringify(currentUser));
@@ -62,7 +86,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('hyip_transactions', JSON.stringify(transactions));
   }, [currentUser, users, plans, investments, transactions]);
 
-  // Sync currentUser with users list to reflect balance changes in header
+  // Sync currentUser with users list to reflect balance changes in real-time
   useEffect(() => {
     if (currentUser) {
       const liveUser = users.find(u => u.id === currentUser.id);
@@ -70,75 +94,77 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrentUser(liveUser);
       }
     }
-  }, [users, currentUser]);
+  }, [users]);
 
-  // Daily profit simulator logic
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setInvestments(prevInvestments => {
-        let hasChanges = false;
-        const newTransactions: Transaction[] = [];
-        const userUpdates: Record<string, number> = {};
+  // Profit Processing Logic
+  const processProfits = () => {
+    setInvestments(prevInvestments => {
+      let hasChanges = false;
+      const newTransactions: Transaction[] = [];
+      const userUpdates: Record<string, number> = {};
 
-        const nextInvestments = prevInvestments.map(inv => {
-          if (inv.status !== 'ACTIVE') return inv;
+      const nextInvestments = prevInvestments.map(inv => {
+        if (inv.status !== 'ACTIVE') return inv;
 
-          const plan = plans.find(p => p.id === inv.planId);
-          if (!plan) return inv;
+        const plan = plans.find(p => p.id === inv.planId);
+        if (!plan) return inv;
 
-          let tempInv = { ...inv };
-          let processedAny = false;
+        let tempInv = { ...inv };
+        let processedAny = false;
 
-          // Catch-up logic: process all missed payouts
-          while (Date.now() > tempInv.nextPayout && tempInv.totalPayouts < plan.durationDays) {
-            hasChanges = true;
-            processedAny = true;
-            const profit = tempInv.amount * (plan.roi / 100);
-            
-            // Collect updates
-            userUpdates[tempInv.userId] = (userUpdates[tempInv.userId] || 0) + profit;
-            
-            newTransactions.push({
-              id: Math.random().toString(36).substr(2, 9),
-              userId: tempInv.userId,
-              amount: profit,
-              type: TransactionType.PROFIT,
-              status: TransactionStatus.COMPLETED,
-              date: Date.now(),
-              details: `ROI Payout from ${plan.name} (${tempInv.totalPayouts + 1}/${plan.durationDays})`
-            });
+        // Simulator Logic: Check if it's time for the next payout
+        while (Date.now() > tempInv.nextPayout && tempInv.totalPayouts < plan.durationDays) {
+          hasChanges = true;
+          processedAny = true;
+          const profit = tempInv.amount * (plan.roi / 100);
+          
+          userUpdates[tempInv.userId] = (userUpdates[tempInv.userId] || 0) + profit;
+          
+          newTransactions.push({
+            id: Math.random().toString(36).substr(2, 9),
+            userId: tempInv.userId,
+            amount: profit,
+            type: TransactionType.PROFIT,
+            status: TransactionStatus.COMPLETED,
+            date: Date.now(),
+            details: `Profit payout from ${plan.name} (${tempInv.totalPayouts + 1}/${plan.durationDays})`
+          });
 
-            tempInv.totalPayouts += 1;
-            tempInv.nextPayout += SIMULATED_DAY_MS;
+          tempInv.totalPayouts += 1;
+          tempInv.nextPayout += SIMULATED_DAY_MS;
 
-            if (tempInv.totalPayouts >= plan.durationDays) {
-              tempInv.status = 'COMPLETED' as 'COMPLETED';
-              break;
-            }
+          if (tempInv.totalPayouts >= plan.durationDays) {
+            tempInv.status = 'COMPLETED';
+            break;
           }
-
-          return processedAny ? tempInv : inv;
-        });
-
-        if (hasChanges) {
-          setUsers(prevUsers => prevUsers.map(u => {
-            if (userUpdates[u.id]) {
-              return { ...u, balance: u.balance + userUpdates[u.id] };
-            }
-            return u;
-          }));
-          setTransactions(prevT => [...newTransactions, ...prevT]);
-          return nextInvestments;
         }
 
-        return prevInvestments;
+        return processedAny ? tempInv : inv;
       });
-    }, 5000);
 
+      if (hasChanges) {
+        setUsers(prevUsers => prevUsers.map(u => {
+          if (userUpdates[u.id]) {
+            return { ...u, balance: u.balance + userUpdates[u.id] };
+          }
+          return u;
+        }));
+        setTransactions(prevT => [...newTransactions, ...prevT]);
+        return nextInvestments;
+      }
+
+      return prevInvestments;
+    });
+  };
+
+  // Automatic profit cycle every 10 seconds (checks for due payouts)
+  useEffect(() => {
+    const interval = setInterval(processProfits, 10000);
     return () => clearInterval(interval);
   }, [plans]);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
+    // Admin Override
     if (email === 'admin@hyip.com' && pass === 'admin123') {
       const admin = users.find(u => u.email === email);
       if (admin) {
@@ -146,6 +172,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return true;
       }
     }
+    // Normal User Check
     const user = users.find(u => u.email === email && !u.isBlocked);
     if (user) {
       setCurrentUser(user);
@@ -161,7 +188,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const register = async (name: string, email: string, referralCode?: string): Promise<boolean> => {
     if (users.find(u => u.email === email)) return false;
     
-    // Validate referral code if provided
     let referredBy: string | undefined = undefined;
     if (referralCode) {
       const referrer = users.find(u => u.referralCode === referralCode);
@@ -173,7 +199,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       email,
       name,
       role: UserRole.USER,
-      balance: 1000, // Giving some starting credit for demo
+      balance: 1000, 
       totalInvested: 0,
       totalWithdrawn: 0,
       referralCode: name.toUpperCase().replace(/\s/g, '') + Math.floor(Math.random() * 1000),
@@ -232,10 +258,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       startDate: Date.now(),
       nextPayout: Date.now() + SIMULATED_DAY_MS,
       totalPayouts: 0,
-      status: 'ACTIVE' as 'ACTIVE'
+      status: 'ACTIVE'
     };
 
-    // Referral Logic: 5% of investment
+    // Referral Commission Logic (5%)
     if (liveUser.referredBy) {
       const commission = amount * 0.05;
       setUsers(prev => prev.map(u => {
@@ -267,7 +293,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       type: TransactionType.DEPOSIT,
       status: TransactionStatus.COMPLETED,
       date: Date.now(),
-      details: `Invested in ${plan.name} - Plan ROI: ${plan.roi}%, Duration: ${plan.durationDays} days`
+      details: `Capital allocated to ${plan.name} package`
     }, ...prev]);
 
     return null;
@@ -316,11 +342,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPlans([...plans, newPlan]);
   };
 
+  const debugTriggerProfit = () => {
+    // Manually push nextPayouts back in time to trigger immediate payouts
+    setInvestments(prev => prev.map(inv => {
+      if (inv.status === 'ACTIVE') {
+        return { ...inv, nextPayout: Date.now() - 1000 };
+      }
+      return inv;
+    }));
+    setTimeout(processProfits, 100);
+  };
+
   return (
     <AppContext.Provider value={{
-      currentUser, users, plans, investments, transactions,
+      currentUser, users, plans, investments, transactions, platformStats,
       login, logout, register, makeDeposit, requestWithdrawal, investInPlan,
-      adminApproveWithdrawal, adminRejectWithdrawal, adminUpdateUser, adminUpdatePlan, adminDeletePlan, adminCreatePlan
+      adminApproveWithdrawal, adminRejectWithdrawal, adminUpdateUser, adminUpdatePlan, adminDeletePlan, adminCreatePlan, debugTriggerProfit
     }}>
       {children}
     </AppContext.Provider>

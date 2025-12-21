@@ -14,8 +14,8 @@ import { PublicPlansPage } from './pages/PublicPlans';
 import { UserRole } from './types';
 
 /**
- * Next.js inspired Route Guard
- * Handles protected layout wrapping and role checks
+ * Enhanced Route Guard
+ * Manages access control and redirects based on authentication status and user roles.
  */
 const RouteWrapper: React.FC<{ 
   children: React.ReactNode; 
@@ -24,18 +24,22 @@ const RouteWrapper: React.FC<{
 }> = ({ children, isPrivate, adminOnly }) => {
   const { currentUser } = useApp();
   
+  // 1. Not logged in but trying to access a private route
   if (isPrivate && !currentUser) {
     return <Navigate to="/login" replace />;
   }
 
+  // 2. Logged in as user but trying to access admin-only route
   if (adminOnly && currentUser?.role !== UserRole.ADMIN) {
     return <Navigate to="/dashboard" replace />;
   }
   
+  // 3. Authenticated - Wrap in shared layout
   if (isPrivate) {
     return <DashboardLayout>{children}</DashboardLayout>;
   }
 
+  // 4. Public route
   return <>{children}</>;
 };
 
@@ -44,21 +48,29 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      {/* Public Pages */}
+      {/* Landing / Public Entry */}
       <Route path="/" element={
-        <RouteWrapper>
-          {currentUser ? <Navigate to="/dashboard" replace /> : <LandingPage />}
-        </RouteWrapper>
+        currentUser ? (
+          currentUser.role === UserRole.ADMIN ? <Navigate to="/admin" replace /> : <Navigate to="/dashboard" replace />
+        ) : (
+          <LandingPage />
+        )
       } />
       
-      <Route path="/login" element={<AuthForm mode="login" />} />
-      <Route path="/register" element={<AuthForm mode="register" />} />
+      <Route path="/login" element={
+        currentUser ? <Navigate to="/" replace /> : <AuthForm mode="login" />
+      } />
+      
+      <Route path="/register" element={
+        currentUser ? <Navigate to="/" replace /> : <AuthForm mode="register" />
+      } />
+      
       <Route path="/public-plans" element={<PublicPlansPage />} />
       
-      {/* Protected Dashboard Pages */}
+      {/* Protected Member Dashboard */}
       <Route path="/dashboard" element={
         <RouteWrapper isPrivate>
-          <UserDashboard />
+          {currentUser?.role === UserRole.ADMIN ? <Navigate to="/admin" replace /> : <UserDashboard />}
         </RouteWrapper>
       } />
       
@@ -80,21 +92,19 @@ const AppRoutes = () => {
         </RouteWrapper>
       } />
       
-      {/* Admin Restricted Pages */}
+      {/* Admin Operations Center */}
       <Route path="/admin" element={
         <RouteWrapper isPrivate adminOnly>
           <AdminPanel />
         </RouteWrapper>
       } />
       
+      {/* Catch-all fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
 
-/**
- * Main App entry mimicking Next.js Root Layout functionality
- */
 const App: React.FC = () => {
   return (
     <AppProvider>
