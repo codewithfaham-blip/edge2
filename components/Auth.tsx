@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, Mail, Lock, User, ArrowRight, Copy, Check } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, User, ArrowRight, Copy, Check, Share2 } from 'lucide-react';
 import { PublicNavbar } from './Navbar';
 
 export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => {
@@ -12,6 +12,7 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
     name: '',
     email: '',
     password: '',
+    referralCode: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,7 +29,7 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
         if (success) navigate('/dashboard');
         else setError('Invalid email or password');
       } else {
-        const success = await register(formData.name, formData.email);
+        const success = await register(formData.name, formData.email, formData.referralCode);
         if (success) navigate('/dashboard');
         else setError('Email already in use');
       }
@@ -42,12 +43,14 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
   const autoFill = (type: 'admin' | 'user') => {
     if (type === 'admin') {
       setFormData({
+        ...formData,
         name: 'Platform Administrator',
         email: 'admin@hyip.com',
         password: 'admin123',
       });
     } else {
       setFormData({
+        ...formData,
         name: 'John Doe',
         email: 'demo@user.com',
         password: 'password123',
@@ -120,6 +123,22 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
               />
             </div>
           </div>
+
+          {mode === 'register' && (
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Referral Code (Optional)</label>
+              <div className="relative">
+                <Share2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
+                <input
+                  type="text"
+                  placeholder="CODE123"
+                  className="w-full bg-[#141922] border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-white focus:border-blue-500 outline-none transition-all placeholder:text-gray-700"
+                  value={formData.referralCode}
+                  onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
 
           {error && <p className="text-red-500 text-xs font-bold text-center bg-red-500/10 py-3 rounded-xl border border-red-500/20">{error}</p>}
 

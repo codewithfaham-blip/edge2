@@ -11,7 +11,7 @@ interface AppContextType {
   transactions: Transaction[];
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
-  register: (name: string, email: string) => Promise<boolean>;
+  register: (name: string, email: string, referralCode?: string) => Promise<boolean>;
   makeDeposit: (amount: number, method: string) => void;
   requestWithdrawal: (amount: number, method: string) => void;
   investInPlan: (planId: string, amount: number) => string | null;
@@ -121,23 +121,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
 
         if (hasChanges) {
-          // Apply user balance updates
           setUsers(prevUsers => prevUsers.map(u => {
             if (userUpdates[u.id]) {
               return { ...u, balance: u.balance + userUpdates[u.id] };
             }
             return u;
           }));
-
-          // Apply new transactions
           setTransactions(prevT => [...newTransactions, ...prevT]);
-          
           return nextInvestments;
         }
 
         return prevInvestments;
       });
-    }, 5000); // Check every 5 seconds for smoother updates
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [plans]);
@@ -162,17 +158,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(null);
   };
 
-  const register = async (name: string, email: string): Promise<boolean> => {
+  const register = async (name: string, email: string, referralCode?: string): Promise<boolean> => {
     if (users.find(u => u.email === email)) return false;
+    
+    // Validate referral code if provided
+    let referredBy: string | undefined = undefined;
+    if (referralCode) {
+      const referrer = users.find(u => u.referralCode === referralCode);
+      if (referrer) referredBy = referrer.id;
+    }
+
     const newUser: User = {
       id: Math.random().toString(36).substr(2, 9),
       email,
       name,
       role: UserRole.USER,
-      balance: 100,
+      balance: 1000, // Giving some starting credit for demo
       totalInvested: 0,
       totalWithdrawn: 0,
-      referralCode: name.toUpperCase().replace(/\s/g, '') + Math.floor(Math.random() * 100),
+      referralCode: name.toUpperCase().replace(/\s/g, '') + Math.floor(Math.random() * 1000),
+      referredBy,
       createdAt: Date.now(),
       isBlocked: false,
     };
@@ -229,6 +234,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       totalPayouts: 0,
       status: 'ACTIVE' as 'ACTIVE'
     };
+
+    // Referral Logic: 5% of investment
+    if (liveUser.referredBy) {
+      const commission = amount * 0.05;
+      setUsers(prev => prev.map(u => {
+        if (u.id === liveUser.referredBy) return { ...u, balance: u.balance + commission };
+        return u;
+      }));
+      setTransactions(prev => [{
+        id: Math.random().toString(36).substr(2, 9),
+        userId: liveUser.referredBy as string,
+        amount: commission,
+        type: TransactionType.REFERRAL,
+        status: TransactionStatus.COMPLETED,
+        date: Date.now(),
+        details: `Referral commission from ${liveUser.name}'s investment`
+      }, ...prev]);
+    }
 
     setInvestments(prev => [newInv, ...prev]);
     setUsers(prev => prev.map(u => u.id === liveUser.id ? { 
