@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, Mail, Lock, User, ArrowRight, Copy, Check, Share2 } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, User, ArrowRight, Copy, Check, Share2, AtSign } from 'lucide-react';
 import { PublicNavbar } from './Navbar';
 
 export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => {
@@ -11,6 +11,7 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    userId: '', // New field for user-defined ID / Referral Code
     password: '',
     referralCode: '',
   });
@@ -29,9 +30,14 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
         if (success) navigate('/dashboard');
         else setError('Invalid email or password');
       } else {
-        const success = await register(formData.name, formData.email, formData.referralCode);
-        if (success) navigate('/dashboard');
-        else setError('Email already in use');
+        if (formData.userId.length < 4) {
+          setError('User ID must be at least 4 characters');
+          setLoading(false);
+          return;
+        }
+        const response = await register(formData.name, formData.email, formData.userId, formData.referralCode);
+        if (response.success) navigate('/dashboard');
+        else setError(response.message || 'Registration failed');
       }
     } catch (err) {
       setError('Something went wrong. Please try again.');
@@ -53,6 +59,7 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
         ...formData,
         name: 'John Doe',
         email: 'demo@user.com',
+        userId: 'JOHNDOE77',
         password: 'password123',
       });
     }
@@ -76,16 +83,16 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8 relative">
+        <form onSubmit={handleSubmit} className="space-y-6 relative">
           {mode === 'register' && (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
               <div className="relative">
                 <input
                   required
                   type="text"
                   placeholder="John Doe"
-                  className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium"
+                  className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-4 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
@@ -93,28 +100,48 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
             </div>
           )}
 
-          <div className="space-y-3">
+          {mode === 'register' && (
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Unique User ID (Referral Code)</label>
+              <div className="relative group">
+                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-600">
+                  <AtSign className="w-4 h-4" />
+                </div>
+                <input
+                  required
+                  type="text"
+                  placeholder="MYWEALTHCODE"
+                  className="w-full bg-[#11141b] border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-bold tracking-tight uppercase"
+                  value={formData.userId}
+                  onChange={(e) => setFormData({ ...formData, userId: e.target.value.replace(/[^a-zA-Z0-9]/g, '') })}
+                />
+              </div>
+              <p className="text-[9px] text-gray-600 ml-1">Alphanumeric only. This will be your login and referral ID.</p>
+            </div>
+          )}
+
+          <div className="space-y-2">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Email Address</label>
             <div className="relative">
               <input
                 required
                 type="email"
                 placeholder="name@provider.com"
-                className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium"
+                className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-4 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Password</label>
             <div className="relative">
               <input
                 required
                 type="password"
                 placeholder="••••••••"
-                className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium"
+                className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-4 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
@@ -122,13 +149,13 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
           </div>
 
           {mode === 'register' && (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Referral Code (Optional)</label>
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="CODE123"
-                  className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-5 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium"
+                  placeholder="INVITER_CODE"
+                  className="w-full bg-[#11141b] border border-white/5 rounded-2xl px-6 py-4 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-medium uppercase"
                   value={formData.referralCode}
                   onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
                 />

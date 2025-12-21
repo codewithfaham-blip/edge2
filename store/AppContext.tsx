@@ -21,7 +21,7 @@ interface AppContextType {
   platformStats: PlatformStats;
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
-  register: (name: string, email: string, referralCode?: string) => Promise<boolean>;
+  register: (name: string, email: string, userId: string, referrerCode?: string) => Promise<{success: boolean, message?: string}>;
   makeDeposit: (amount: number, method: string) => void;
   requestWithdrawal: (amount: number, method: string) => void;
   investInPlan: (planId: string, amount: number) => string | null;
@@ -185,12 +185,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(null);
   };
 
-  const register = async (name: string, email: string, referralCode?: string): Promise<boolean> => {
-    if (users.find(u => u.email === email)) return false;
+  const register = async (name: string, email: string, userId: string, referrerCode?: string): Promise<{success: boolean, message?: string}> => {
+    if (users.find(u => u.email === email)) return { success: false, message: 'Email already registered' };
     
+    const normalizedUserId = userId.trim().toUpperCase().replace(/\s/g, '');
+    if (users.find(u => u.referralCode === normalizedUserId)) return { success: false, message: 'User ID / Referral code is taken' };
+
     let referredBy: string | undefined = undefined;
-    if (referralCode) {
-      const referrer = users.find(u => u.referralCode === referralCode);
+    if (referrerCode) {
+      const referrer = users.find(u => u.referralCode === referrerCode.trim().toUpperCase());
       if (referrer) referredBy = referrer.id;
     }
 
@@ -202,14 +205,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       balance: 1000, 
       totalInvested: 0,
       totalWithdrawn: 0,
-      referralCode: name.toUpperCase().replace(/\s/g, '') + Math.floor(Math.random() * 1000),
+      referralCode: normalizedUserId,
       referredBy,
       createdAt: Date.now(),
       isBlocked: false,
     };
     setUsers([...users, newUser]);
     setCurrentUser(newUser);
-    return true;
+    return { success: true };
   };
 
   const makeDeposit = (amount: number, method: string) => {
