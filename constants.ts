@@ -1,0 +1,59 @@
+
+import { InvestmentPlan, User, UserRole } from './types';
+
+export const INITIAL_PLANS: InvestmentPlan[] = [
+  {
+    id: 'plan_1',
+    name: 'Standard Alpha',
+    minAmount: 100,
+    maxAmount: 1000,
+    roi: 1.5,
+    period: 'DAILY',
+    durationDays: 30,
+  },
+  {
+    id: 'plan_2',
+    name: 'Ethereum Plus',
+    minAmount: 1001,
+    maxAmount: 5000,
+    roi: 2.5,
+    period: 'DAILY',
+    durationDays: 45,
+  },
+  {
+    id: 'plan_3',
+    name: 'Bitcoin Pro',
+    minAmount: 5001,
+    maxAmount: 50000,
+    roi: 4.0,
+    period: 'DAILY',
+    durationDays: 60,
+  }
+];
+
+export const MOCK_USERS: User[] = [
+  {
+    id: 'admin_1',
+    email: 'admin@hyip.com',
+    name: 'Platform Administrator',
+    role: UserRole.ADMIN,
+    balance: 0,
+    totalInvested: 0,
+    totalWithdrawn: 0,
+    referralCode: 'ADMIN_PLATINUM',
+    createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
+    isBlocked: false,
+  },
+  {
+    id: 'user_1',
+    email: 'demo@user.com',
+    name: 'John Doe',
+    role: UserRole.USER,
+    balance: 5000,
+    totalInvested: 1200,
+    totalWithdrawn: 450,
+    referralCode: 'JOHNDOE77',
+    createdAt: Date.now() - 15 * 24 * 60 * 60 * 1000,
+    isBlocked: false,
+  }
+];
