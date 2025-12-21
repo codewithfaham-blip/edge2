@@ -288,4 +288,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPlans(prev => prev.filter(p => p.id !== id));
   };
 
-  const admin
+  const adminCreatePlan = (planData: Omit<InvestmentPlan, 'id'>) => {
+    const newPlan = { ...planData, id: 'plan_' + Date.now() };
+    setPlans([...plans, newPlan]);
+  };
+
+  return (
+    <AppContext.Provider value={{
+      currentUser, users, plans, investments, transactions,
+      login, logout, register, makeDeposit, requestWithdrawal, investInPlan,
+      adminApproveWithdrawal, adminRejectWithdrawal, adminUpdateUser, adminUpdatePlan, adminDeletePlan, adminCreatePlan
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) throw new Error('useApp must be used within AppProvider');
+  return context;
+};

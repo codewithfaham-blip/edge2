@@ -22,6 +22,16 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     ...(isAdmin ? [{ name: 'Admin Panel', icon: ShieldCheck, path: '/admin' }] : []),
   ];
 
+  // Mobile-specific bottom nav items (top 4 important ones)
+  const mobileNav = [
+    { name: 'Home', icon: LayoutDashboard, path: '/dashboard' },
+    { name: 'Invest', icon: TrendingUp, path: '/invest' },
+    { name: 'Finance', icon: Wallet, path: '/transactions' },
+    isAdmin 
+      ? { name: 'Admin', icon: ShieldCheck, path: '/admin' }
+      : { name: 'Refs', icon: Users, path: '/referrals' }
+  ];
+
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -34,7 +44,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar (Desktop) */}
       <div className={`fixed inset-y-0 left-0 w-64 bg-[#0e121a] border-r border-gray-800 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-200 z-50`}>
         <div className="p-6">
           <Link to="/" className="flex items-center gap-2 mb-10">
@@ -72,7 +82,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="flex-1 md:ml-64">
         {/* Header */}
         <header className="h-20 bg-[#0e121a]/80 backdrop-blur-lg sticky top-0 border-b border-gray-800 px-6 flex items-center justify-between z-30">
@@ -89,19 +99,46 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex flex-col items-end">
-              <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Account Balance</span>
-              <span className="text-lg font-bold text-green-500 font-mono">${currentUser.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Balance</span>
+              <span className="text-sm md:text-lg font-bold text-green-500 font-mono">${currentUser.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold">
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-sm">
               {currentUser.name[0]}
             </div>
           </div>
         </header>
 
-        <main className="p-6 md:p-10 max-w-7xl mx-auto">
+        {/* Added pb-24 on mobile to account for the bottom nav bar */}
+        <main className="p-6 md:p-10 max-w-7xl mx-auto pb-24 md:pb-10">
           {children}
         </main>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-4">
+        <div className="bg-[#0e121a]/90 backdrop-blur-2xl border border-white/10 rounded-[28px] h-20 flex items-center justify-around px-2 shadow-2xl shadow-black/50">
+          {mobileNav.map((item) => {
+            const active = isActive(item.path);
+            return (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-all active:scale-90 ${
+                  active ? 'text-blue-500' : 'text-gray-500'
+                }`}
+              >
+                <div className={`relative p-2 rounded-2xl transition-all ${active ? 'bg-blue-600/10' : ''}`}>
+                  <item.icon className={`w-5 h-5 ${active ? 'fill-blue-500/10' : ''}`} />
+                  {active && (
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                  )}
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-tighter">{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

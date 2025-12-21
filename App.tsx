@@ -9,6 +9,7 @@ import { InvestPage } from './pages/Invest';
 import { TransactionsPage } from './pages/Transactions';
 import { AuthForm } from './components/Auth';
 import { DashboardLayout } from './components/Layout';
+import { PublicPlansPage } from './pages/PublicPlans';
 import { UserRole } from './types';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({ children, adminOnly }) => {
@@ -28,25 +29,26 @@ const MainContent = () => {
       <Route path="/" element={currentUser ? <Navigate to="/dashboard" /> : <LandingPage />} />
       <Route path="/login" element={<AuthForm mode="login" />} />
       <Route path="/register" element={<AuthForm mode="register" />} />
+      <Route path="/public-plans" element={<PublicPlansPage />} />
       
       <Route path="/dashboard" element={<PrivateRoute><UserDashboard /></PrivateRoute>} />
       <Route path="/invest" element={<PrivateRoute><InvestPage /></PrivateRoute>} />
       <Route path="/transactions" element={<PrivateRoute><TransactionsPage /></PrivateRoute>} />
-      <Route path="/referrals" element={<PrivateRoute><div className="bg-[#0e121a] p-10 rounded-3xl border border-gray-800 text-center">
-        <h2 className="text-2xl font-bold mb-4">Referral Program</h2>
-        <p className="text-gray-400 mb-8">Earn 5% of all deposits made by your invited friends.</p>
-        <div className="max-w-md mx-auto p-4 bg-[#141922] border border-gray-800 rounded-2xl flex items-center justify-between">
-           <span className="font-mono text-blue-500">https://cryptoyield.io/?ref={currentUser?.referralCode}</span>
-           <button className="bg-blue-600 px-4 py-2 rounded-xl text-xs font-bold">Copy</button>
+      <Route path="/referrals" element={<PrivateRoute><div className="bg-[#0e121a] p-10 rounded-[48px] border border-white/5 text-center">
+        <h2 className="text-3xl font-bold mb-6 tracking-tight">Referral Ecosystem</h2>
+        <p className="text-gray-500 mb-10 max-w-lg mx-auto">Build your network and earn 5% commission on every capital allocation made by your invited associates.</p>
+        <div className="max-w-xl mx-auto p-6 bg-[#141922] border border-white/5 rounded-3xl flex items-center justify-between gap-4">
+           <span className="font-mono text-blue-500 truncate text-sm">https://cryptoyield.io/?ref={currentUser?.referralCode}</span>
+           <button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-2xl text-xs font-bold shadow-lg shadow-blue-900/20 whitespace-nowrap">Copy Link</button>
         </div>
-        <div className="mt-12 grid grid-cols-2 gap-6 text-center">
-           <div className="p-6 bg-[#141922] rounded-3xl">
-              <p className="text-gray-500 text-sm mb-1">Total Referrals</p>
-              <p className="text-3xl font-bold">0</p>
+        <div className="mt-16 grid grid-cols-2 gap-8 text-center max-w-2xl mx-auto">
+           <div className="p-10 bg-[#141922] rounded-[32px] border border-white/5">
+              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-3">Active Network</p>
+              <p className="text-4xl font-bold font-mono text-white">0</p>
            </div>
-           <div className="p-6 bg-[#141922] rounded-3xl">
-              <p className="text-gray-500 text-sm mb-1">Referral Earnings</p>
-              <p className="text-3xl font-bold text-emerald-500">$0.00</p>
+           <div className="p-10 bg-[#141922] rounded-[32px] border border-white/5">
+              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-3">Total Commission</p>
+              <p className="text-4xl font-bold font-mono text-emerald-500">$0.00</p>
            </div>
         </div>
       </div></PrivateRoute>} />
