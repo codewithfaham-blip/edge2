@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
+import { useLocation } from 'react-router-dom';
 import { 
   ShieldAlert, Users as UsersIcon, Wallet, Layers, Check, X, Edit, Trash2, 
   Plus, Save, Terminal, RefreshCw, BarChart3, Settings, 
@@ -10,6 +11,8 @@ import {
 import { TransactionStatus, UserRole, InvestmentPlan, TransactionType } from '../types';
 import { StatCard, ActionModule, AdminTable, StatusBadge } from '../components/AdminShared';
 
+type AdminTab = 'overview' | 'users' | 'withdrawals' | 'plans' | 'system';
+
 export const AdminPanel = () => {
   const { 
     users, transactions, plans, platformStats,
@@ -17,10 +20,20 @@ export const AdminPanel = () => {
     adminDeletePlan, adminCreatePlan, adminUpdatePlan, debugTriggerProfit 
   } = useApp();
   
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'plans' | 'system'>('overview');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<InvestmentPlan | null>(null);
+
+  // Sync tab state with URL search parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab') as AdminTab;
+    if (tab && ['overview', 'users', 'withdrawals', 'plans', 'system'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   const pendingWithdrawals = transactions.filter(t => t.type === TransactionType.WITHDRAWAL && t.status === TransactionStatus.PENDING);
 

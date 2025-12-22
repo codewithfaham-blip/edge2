@@ -1,7 +1,10 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
-import { LayoutDashboard, Wallet, Users, ShieldCheck, TrendingUp, LogOut as LogOutIcon, Menu, X } from 'lucide-react';
+import { 
+  LayoutDashboard, Wallet, Users, ShieldCheck, TrendingUp, 
+  LogOut as LogOutIcon, Menu, X, LayoutGrid, CreditCard, Layers, Settings 
+} from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { UserRole } from '../types';
 
@@ -14,6 +17,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   if (!currentUser) return null;
 
   const isAdmin = currentUser.role === UserRole.ADMIN;
+  const isAtAdminPage = location.pathname.startsWith('/admin');
 
   const navigation = [
     { name: 'Overview', icon: LayoutDashboard, path: isAdmin ? '/admin' : '/dashboard' },
@@ -24,6 +28,15 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     ] : [
       { name: 'Admin Panel', icon: ShieldCheck, path: '/admin' },
     ]),
+  ];
+
+  // Specific admin sub-menus for mobile hamburger
+  const adminSubNav = [
+    { name: 'Summary', icon: LayoutGrid, tab: 'overview' },
+    { name: 'Payouts', icon: CreditCard, tab: 'withdrawals' },
+    { name: 'Members', icon: Users, tab: 'users' },
+    { name: 'Engine', icon: Layers, tab: 'plans' },
+    { name: 'Kernel', icon: Settings, tab: 'system' },
   ];
 
   const mobileNav = [
@@ -49,22 +62,27 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         />
       )}
 
-      {/* Sidebar (Desktop & Mobile) */}
+      {/* Sidebar (Desktop & Mobile Hamburger Drawer) */}
       <div 
         className={`fixed inset-y-0 left-0 bg-[#0e121a] border-r border-gray-800 transform ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 transition-all duration-300 z-50 flex flex-col ${
           isCollapsed ? 'md:w-20' : 'md:w-64'
-        } w-64`}
+        } w-64 shadow-2xl`}
       >
-        <div className={`p-6 ${isCollapsed ? 'md:px-4' : ''}`}>
+        <div className={`p-6 ${isCollapsed ? 'md:px-4' : ''} flex-1 overflow-y-auto no-scrollbar`}>
           <div className="flex items-center justify-between mb-10">
             <Link to="/" className="flex items-center gap-2">
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-900/40 text-white flex-shrink-0">C</div>
             </Link>
+            {/* Close icon for mobile hamburger */}
+            <button className="md:hidden text-gray-500 hover:text-white" onClick={() => setSidebarOpen(false)}>
+              <X className="w-6 h-6" />
+            </button>
           </div>
 
           <nav className="space-y-1">
+            <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-4 ml-4">General</p>
             {navigation.map((item) => {
               const active = isActive(item.path);
               return (
@@ -85,15 +103,27 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                   }`}>
                     {item.name}
                   </span>
-                  
-                  {isCollapsed && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap hidden md:block">
-                      {item.name}
-                    </div>
-                  )}
                 </Link>
               );
             })}
+
+            {/* Mobile Hamburger ONLY Admin Sub-menus */}
+            {isAdmin && (
+              <div className="md:hidden mt-8 space-y-1">
+                <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-4 ml-4">Admin Kernel</p>
+                {adminSubNav.map((sub) => (
+                  <Link
+                    key={sub.name}
+                    to={`/admin?tab=${sub.tab}`}
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all border border-transparent"
+                  >
+                    <sub.icon className="w-5 h-5 text-blue-500/60" />
+                    <span className="font-medium">{sub.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </nav>
         </div>
 
@@ -119,9 +149,9 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         {/* Full Header */}
         <header className="h-20 bg-[#0e121a]/80 backdrop-blur-lg sticky top-0 border-b border-gray-800 px-6 flex items-center justify-between z-30">
           <div className="flex items-center gap-4">
-            {/* Mobile Hamburger (Drawer) */}
+            {/* Mobile Hamburger Toggle */}
             <button 
-              className="md:hidden text-gray-400"
+              className="md:hidden text-gray-400 hover:text-white transition-colors p-2 bg-white/5 rounded-lg"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="w-6 h-6" />
