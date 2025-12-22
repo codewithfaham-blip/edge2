@@ -15,21 +15,29 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
   const isAdmin = currentUser.role === UserRole.ADMIN;
 
+  // Filter navigation: Admins shouldn't "Invest" or manage "Referrals" for themselves
   const navigation = [
-    { name: 'Overview', icon: LayoutDashboard, path: '/dashboard' },
-    { name: 'Invest', icon: TrendingUp, path: '/invest' },
-    { name: 'Transactions', icon: Wallet, path: '/transactions' },
-    { name: 'Referrals', icon: Users, path: '/referrals' },
-    ...(isAdmin ? [{ name: 'Admin Panel', icon: ShieldCheck, path: '/admin' }] : []),
+    { name: 'Overview', icon: LayoutDashboard, path: isAdmin ? '/admin' : '/dashboard' },
+    ...(!isAdmin ? [
+      { name: 'Invest', icon: TrendingUp, path: '/invest' },
+      { name: 'Transactions', icon: Wallet, path: '/transactions' },
+      { name: 'Referrals', icon: Users, path: '/referrals' },
+    ] : [
+      { name: 'Admin Panel', icon: ShieldCheck, path: '/admin' },
+      { name: 'Ledger', icon: Wallet, path: '/transactions' },
+    ]),
   ];
 
   const mobileNav = [
-    { name: 'Home', icon: LayoutDashboard, path: '/dashboard' },
-    { name: 'Invest', icon: TrendingUp, path: '/invest' },
-    { name: 'Finance', icon: Wallet, path: '/transactions' },
-    isAdmin 
-      ? { name: 'Admin', icon: ShieldCheck, path: '/admin' }
-      : { name: 'Refs', icon: Users, path: '/referrals' }
+    { name: 'Home', icon: LayoutDashboard, path: isAdmin ? '/admin' : '/dashboard' },
+    ...(!isAdmin ? [
+      { name: 'Invest', icon: TrendingUp, path: '/invest' },
+      { name: 'Finance', icon: Wallet, path: '/transactions' },
+      { name: 'Refs', icon: Users, path: '/referrals' }
+    ] : [
+      { name: 'Admin', icon: ShieldCheck, path: '/admin' },
+      { name: 'Ledger', icon: Wallet, path: '/transactions' }
+    ])
   ];
 
   const isActive = (path: string) => location.pathname === path;

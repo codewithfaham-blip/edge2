@@ -21,7 +21,8 @@ const RouteWrapper: React.FC<{
   children: React.ReactNode; 
   isPrivate?: boolean;
   adminOnly?: boolean;
-}> = ({ children, isPrivate, adminOnly }) => {
+  userOnly?: boolean;
+}> = ({ children, isPrivate, adminOnly, userOnly }) => {
   const { currentUser } = useApp();
   
   // 1. Not logged in but trying to access a private route
@@ -33,13 +34,18 @@ const RouteWrapper: React.FC<{
   if (adminOnly && currentUser?.role !== UserRole.ADMIN) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  // 3. Logged in as admin but trying to access user-only route (like Invest)
+  if (userOnly && currentUser?.role === UserRole.ADMIN) {
+    return <Navigate to="/admin" replace />;
+  }
   
-  // 3. Authenticated - Wrap in shared layout
+  // 4. Authenticated - Wrap in shared layout
   if (isPrivate) {
     return <DashboardLayout>{children}</DashboardLayout>;
   }
 
-  // 4. Public route
+  // 5. Public route
   return <>{children}</>;
 };
 
@@ -69,13 +75,13 @@ const AppRoutes = () => {
       
       {/* Protected Member Dashboard */}
       <Route path="/dashboard" element={
-        <RouteWrapper isPrivate>
+        <RouteWrapper isPrivate userOnly>
           {currentUser?.role === UserRole.ADMIN ? <Navigate to="/admin" replace /> : <UserDashboard />}
         </RouteWrapper>
       } />
       
       <Route path="/invest" element={
-        <RouteWrapper isPrivate>
+        <RouteWrapper isPrivate userOnly>
           <InvestPage />
         </RouteWrapper>
       } />
@@ -87,7 +93,7 @@ const AppRoutes = () => {
       } />
       
       <Route path="/referrals" element={
-        <RouteWrapper isPrivate>
+        <RouteWrapper isPrivate userOnly>
           <ReferralsPage />
         </RouteWrapper>
       } />

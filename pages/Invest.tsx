@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
-import { ShieldCheck, Info, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Info, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { UserRole } from '../types';
+import { Navigate } from 'react-router-dom';
 
 export const InvestPage = () => {
   const { plans, currentUser, investInPlan } = useApp();
@@ -9,6 +11,11 @@ export const InvestPage = () => {
   const [amount, setAmount] = useState<number>(100);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Hard redirect if an admin somehow accesses this page
+  if (currentUser?.role === UserRole.ADMIN) {
+    return <Navigate to="/admin" replace />;
+  }
 
   const selectedPlan = plans.find(p => p.id === selectedPlanId);
 
