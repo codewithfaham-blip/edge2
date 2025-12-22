@@ -24,7 +24,6 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       { name: 'Referrals', icon: Users, path: '/referrals' },
     ] : [
       { name: 'Admin Panel', icon: ShieldCheck, path: '/admin' },
-      { name: 'Ledger', icon: Wallet, path: '/transactions' },
     ]),
   ];
 
@@ -35,8 +34,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       { name: 'Finance', icon: Wallet, path: '/transactions' },
       { name: 'Refs', icon: Users, path: '/referrals' }
     ] : [
-      { name: 'Admin', icon: ShieldCheck, path: '/admin' },
-      { name: 'Ledger', icon: Wallet, path: '/transactions' }
+      { name: 'Admin', icon: ShieldCheck, path: '/admin' }
     ])
   ];
 
@@ -104,7 +102,13 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         {/* Sidebar Footer */}
         <div className={`mt-auto p-6 border-t border-gray-800 mb-24 md:mb-0 hidden md:block ${isCollapsed ? 'md:px-4' : ''}`}>
            <div className={`flex items-center gap-3 px-4 py-2 bg-blue-600/5 rounded-2xl border border-white/5 overflow-hidden transition-all duration-300 ${isCollapsed ? 'md:px-2 md:justify-center' : ''}`}>
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0">{currentUser.name[0]}</div>
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0 overflow-hidden">
+                {currentUser.avatar ? (
+                  <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+                ) : (
+                  currentUser.name[0]
+                )}
+              </div>
               <div className={`flex flex-col overflow-hidden transition-all duration-300 ${isCollapsed ? 'md:w-0 md:opacity-0' : 'w-auto opacity-100'}`}>
                  <span className="text-sm font-bold text-white truncate">{currentUser.name}</span>
                  <span className="text-[10px] text-gray-500 truncate uppercase tracking-tighter">{currentUser.role}</span>
@@ -159,8 +163,12 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
               >
                 <LogOutIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </button>
-              <div className="hidden sm:flex w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center font-bold text-sm border-2 border-white/5 shadow-lg flex-shrink-0">
-                {currentUser.name[0]}
+              <div className="hidden sm:flex w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center font-bold text-sm border-2 border-white/5 shadow-lg flex-shrink-0 overflow-hidden">
+                {currentUser.avatar ? (
+                  <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+                ) : (
+                  currentUser.name[0]
+                )}
               </div>
             </div>
           </div>

@@ -36,6 +36,7 @@ export const MOCK_USERS: User[] = [
     id: 'admin_1',
     email: 'admin@hyip.com',
     name: 'Platform Administrator',
+    avatar: 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
     role: UserRole.ADMIN,
     balance: 0,
     totalInvested: 0,
