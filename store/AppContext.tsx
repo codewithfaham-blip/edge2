@@ -64,7 +64,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Derived Platform Stats for Admin
   const platformStats = useMemo(() => {
     const stats: PlatformStats = {
       totalUsers: users.length,
@@ -77,7 +76,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return stats;
   }, [users, transactions, investments]);
 
-  // Sync state with local storage
   useEffect(() => {
     localStorage.setItem('hyip_current_user', JSON.stringify(currentUser));
     localStorage.setItem('hyip_users', JSON.stringify(users));
@@ -86,7 +84,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('hyip_transactions', JSON.stringify(transactions));
   }, [currentUser, users, plans, investments, transactions]);
 
-  // Sync currentUser with users list to reflect balance changes in real-time
   useEffect(() => {
     if (currentUser) {
       const liveUser = users.find(u => u.id === currentUser.id);
@@ -96,7 +93,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [users]);
 
-  // Profit Processing Logic
   const processProfits = () => {
     setInvestments(prevInvestments => {
       let hasChanges = false;
@@ -112,7 +108,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         let tempInv = { ...inv };
         let processedAny = false;
 
-        // Simulator Logic: Check if it's time for the next payout
         while (Date.now() > tempInv.nextPayout && tempInv.totalPayouts < plan.durationDays) {
           hasChanges = true;
           processedAny = true;
@@ -127,10 +122,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             type: TransactionType.PROFIT,
             status: TransactionStatus.COMPLETED,
             date: Date.now(),
-            details: `Profit payout from ${plan.name} (${tempInv.totalPayouts + 1}/${plan.durationDays})`
+            details: `Yield payout from ${plan.name} (${tempInv.totalPayouts + 1}/${plan.durationDays})`
           });
 
           tempInv.totalPayouts += 1;
+          tempInv.earnedSoFar += profit;
           tempInv.nextPayout += SIMULATED_DAY_MS;
 
           if (tempInv.totalPayouts >= plan.durationDays) {
@@ -157,14 +153,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Automatic profit cycle every 10 seconds (checks for due payouts)
   useEffect(() => {
-    const interval = setInterval(processProfits, 10000);
+    const interval = setInterval(processProfits, 5000); // Check every 5s for smoother ROI tracking
     return () => clearInterval(interval);
   }, [plans]);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
-    // Admin Override
     if (email === 'admin@hyip.com' && pass === 'admin123') {
       const admin = users.find(u => u.email === email);
       if (admin) {
@@ -172,7 +166,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return true;
       }
     }
-    // Normal User Check
     const user = users.find(u => u.email === email && !u.isBlocked);
     if (user) {
       setCurrentUser(user);
@@ -187,7 +180,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const register = async (name: string, email: string, userId: string, referrerCode?: string): Promise<{success: boolean, message?: string}> => {
     if (users.find(u => u.email === email)) return { success: false, message: 'Email already registered' };
-    
     const normalizedUserId = userId.trim().toUpperCase().replace(/\s/g, '');
     if (users.find(u => u.referralCode === normalizedUserId)) return { success: false, message: 'User ID / Referral code is taken' };
 
@@ -258,13 +250,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       userId: liveUser.id,
       planId,
       amount,
+      earnedSoFar: 0,
       startDate: Date.now(),
       nextPayout: Date.now() + SIMULATED_DAY_MS,
       totalPayouts: 0,
       status: 'ACTIVE'
     };
 
-    // Referral Commission Logic (5%)
     if (liveUser.referredBy) {
       const commission = amount * 0.05;
       setUsers(prev => prev.map(u => {
@@ -346,7 +338,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const debugTriggerProfit = () => {
-    // Manually push nextPayouts back in time to trigger immediate payouts
     setInvestments(prev => prev.map(inv => {
       if (inv.status === 'ACTIVE') {
         return { ...inv, nextPayout: Date.now() - 1000 };

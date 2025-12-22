@@ -46,6 +46,7 @@ export interface Investment {
   userId: string;
   planId: string;
   amount: number;
+  earnedSoFar: number; // Track total profit from this specific investment
   startDate: number;
   nextPayout: number;
   totalPayouts: number;

@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
 import { 
   ShieldAlert, Users as UsersIcon, Wallet, Layers, Check, X, Edit, Trash2, 
-  Plus, Save, Activity, Terminal, RefreshCw, BarChart3, Settings, 
+  Plus, Save, Terminal, RefreshCw, BarChart3, Settings, 
   History, CreditCard, LayoutGrid, ArrowUpCircle, UserPlus, Fingerprint,
   Clock
 } from 'lucide-react';
-import { TransactionStatus, UserRole, InvestmentPlan, User } from '../types';
+import { TransactionStatus, UserRole, InvestmentPlan } from '../types';
+import { StatCard, ActionModule, AdminTable, StatusBadge } from '../components/AdminShared';
 
 export const AdminPanel = () => {
   const { 
@@ -80,7 +81,7 @@ export const AdminPanel = () => {
         </div>
       </div>
 
-      {/* Responsive Sub-Navigation */}
+      {/* Navigation */}
       <div className="flex border-b border-gray-800 bg-[#0e121a]/50 backdrop-blur-md sticky top-20 z-20 p-1.5 gap-1 overflow-x-auto scrollbar-hide rounded-2xl no-scrollbar">
         {[
           { id: 'overview', label: 'Dashboard', icon: LayoutGrid },
@@ -108,195 +109,117 @@ export const AdminPanel = () => {
         ))}
       </div>
 
-      {/* Content Sections */}
       <div className="min-h-[400px]">
-        
-        {/* TAB: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-6 md:space-y-8 animate-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-              {[
-                { label: 'Network Value', val: `$${platformStats.platformBalance.toLocaleString()}`, icon: Wallet, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-                { label: 'Active Capital', val: `$${platformStats.totalInvested.toLocaleString()}`, icon: Layers, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-                { label: 'Withdrawals', val: `$${platformStats.totalWithdrawals.toLocaleString()}`, icon: ArrowUpCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-                { label: 'Network Size', val: platformStats.totalUsers, icon: UsersIcon, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-              ].map((s, i) => (
-                <div key={i} className="bg-[#0e121a] border border-gray-800 p-5 md:p-6 rounded-[24px] md:rounded-[32px] hover:bg-[#141922] transition-all group">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className={`p-2.5 md:p-3 rounded-2xl ${s.bg}`}>
-                      <s.icon className={`w-4 h-4 md:w-5 md:h-5 ${s.color}`} />
-                    </div>
-                    <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-widest">{s.label}</span>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-black font-mono text-white">{s.val}</h3>
-                </div>
-              ))}
+              <StatCard label="Network Value" value={`$${platformStats.platformBalance.toLocaleString()}`} icon={Wallet} color="text-blue-500" bg="bg-blue-500/10" />
+              <StatCard label="Active Capital" value={`$${platformStats.totalInvested.toLocaleString()}`} icon={Layers} color="text-purple-500" bg="bg-purple-500/10" />
+              <StatCard label="Withdrawals" value={`$${platformStats.totalWithdrawals.toLocaleString()}`} icon={ArrowUpCircle} color="text-emerald-500" bg="bg-emerald-500/10" />
+              <StatCard label="Network Size" value={platformStats.totalUsers} icon={UsersIcon} color="text-amber-500" bg="bg-amber-500/10" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              <div className="bg-[#0e121a] border border-gray-800 p-6 md:p-8 rounded-[32px] md:rounded-[40px] flex flex-col justify-between hover:border-emerald-500/30 transition-all group">
-                <div>
-                  <div className="flex items-center gap-3 mb-4 md:mb-6">
-                    <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500"><CreditCard className="w-5 h-5 md:w-6 md:h-6" /></div>
-                    <h4 className="text-lg md:text-xl font-bold">Financial Ops</h4>
-                  </div>
-                  <p className="text-xs md:text-sm text-gray-500 mb-6 md:mb-8 leading-relaxed">Approve or reject capital extraction requests from members.</p>
-                </div>
-                <div className="flex items-center gap-2 md:gap-3">
-                  <button onClick={() => setActiveTab('withdrawals')} className="flex-1 py-3 md:py-4 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-500 hover:text-white rounded-2xl font-bold text-[10px] md:text-xs transition-all uppercase tracking-widest">Withdrawals ({pendingWithdrawals.length})</button>
-                  <button onClick={() => setActiveTab('ledger')} className="p-3 md:p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-gray-400 transition-all"><History className="w-4 h-4 md:w-5 md:h-5" /></button>
-                </div>
-              </div>
-
-              <div className="bg-[#0e121a] border border-gray-800 p-6 md:p-8 rounded-[32px] md:rounded-[40px] flex flex-col justify-between hover:border-blue-500/30 transition-all group">
-                <div>
-                  <div className="flex items-center gap-3 mb-4 md:mb-6">
-                    <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500"><Layers className="w-5 h-5 md:w-6 md:h-6" /></div>
-                    <h4 className="text-lg md:text-xl font-bold">ROI Packages</h4>
-                  </div>
-                  <p className="text-xs md:text-sm text-gray-500 mb-6 md:mb-8 leading-relaxed">Define and optimize investment tiers and daily interest engines.</p>
-                </div>
-                <button onClick={() => setActiveTab('plans')} className="w-full py-3 md:py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-[10px] md:text-xs transition-all uppercase tracking-widest">Manage Plans ({plans.length})</button>
-              </div>
-
-              <div className="bg-[#0e121a] border border-gray-800 p-6 md:p-8 rounded-[32px] md:rounded-[40px] flex flex-col justify-between hover:border-purple-500/30 transition-all group md:col-span-2 lg:col-span-1">
-                <div>
-                  <div className="flex items-center gap-3 mb-4 md:mb-6">
-                    <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-500"><Fingerprint className="w-5 h-5 md:w-6 md:h-6" /></div>
-                    <h4 className="text-lg md:text-xl font-bold">User Audit</h4>
-                  </div>
-                  <p className="text-xs md:text-sm text-gray-500 mb-6 md:mb-8 leading-relaxed">Real-time control over account status and verified balances.</p>
-                </div>
-                <button onClick={() => setActiveTab('users')} className="w-full py-3 md:py-4 bg-purple-600/10 hover:bg-purple-600 text-purple-500 hover:text-white rounded-2xl font-bold text-[10px] md:text-xs transition-all uppercase tracking-widest border border-purple-500/20">Database Access</button>
-              </div>
+              <ActionModule 
+                title="Financial Ops" description="Approve or reject capital extraction requests from members." icon={CreditCard} colorClass="text-emerald-500" bgClass="bg-emerald-500/10"
+                primaryAction={{ label: `Withdrawals (${pendingWithdrawals.length})`, onClick: () => setActiveTab('withdrawals') }}
+                secondaryAction={{ icon: History, onClick: () => setActiveTab('ledger') }}
+              />
+              <ActionModule 
+                title="ROI Packages" description="Define and optimize investment tiers and daily interest engines." icon={Layers} colorClass="text-blue-500" bgClass="bg-blue-500/10"
+                primaryAction={{ label: `Manage Plans (${plans.length})`, onClick: () => setActiveTab('plans') }}
+              />
+              <ActionModule 
+                title="User Audit" description="Real-time control over account status and verified balances." icon={Fingerprint} colorClass="text-purple-500" bgClass="bg-purple-500/10"
+                primaryAction={{ label: 'Database Access', onClick: () => setActiveTab('users') }}
+              />
             </div>
           </div>
         )}
 
-        {/* TAB: WITHDRAWALS */}
         {activeTab === 'withdrawals' && (
-          <div className="bg-[#0e121a] border border-gray-800 rounded-[24px] md:rounded-[32px] overflow-hidden animate-in fade-in duration-300">
-            <div className="p-5 md:p-8 border-b border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#141922]/30">
-              <h3 className="text-lg md:text-xl font-bold">Withdrawal Queue</h3>
-              <span className="bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest border border-red-500/20">Action Required</span>
-            </div>
-            <div className="overflow-x-auto no-scrollbar">
-              <table className="w-full text-left">
-                <thead className="bg-[#141922]/50 text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                  <tr>
-                    <th className="px-5 md:px-8 py-4 md:py-5">Entity</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5">Amount</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5">Method</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5 hidden lg:table-cell">Date</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5 text-right">Process</th>
+          <AdminTable title="Withdrawal Queue" subtitle="Action Required" headers={['Entity', 'Amount', 'Method', 'Date', 'Process']}>
+            {pendingWithdrawals.length === 0 ? (
+              <tr><td colSpan={5} className="p-20 md:p-32 text-center text-gray-500 text-sm font-medium">Queue is currently clear.</td></tr>
+            ) : (
+              pendingWithdrawals.map(tx => {
+                const user = users.find(u => u.id === tx.userId);
+                return (
+                  <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="px-5 md:px-8 py-4 md:py-6 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-blue-600 flex items-center justify-center font-black text-xs md:text-sm text-white">{user?.name[0]}</div>
+                        <div className="flex flex-col">
+                          <span className="text-xs md:text-sm font-bold text-white">{user?.name}</span>
+                          <span className="text-[8px] md:text-[10px] text-gray-500 font-mono uppercase">{user?.referralCode}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 md:px-8 py-4 md:py-6 font-mono font-black text-amber-500 text-sm md:text-lg">${tx.amount.toLocaleString()}</td>
+                    <td className="px-5 md:px-8 py-4 md:py-6">
+                      <StatusBadge status={tx.method || 'CRYPTO'} variant="info" />
+                    </td>
+                    <td className="px-5 md:px-8 py-4 md:py-6 text-[10px] text-gray-500 font-medium">{new Date(tx.date).toLocaleDateString()}</td>
+                    <td className="px-5 md:px-8 py-4 md:py-6 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5 md:gap-2">
+                         <button onClick={() => adminApproveWithdrawal(tx.id)} className="p-2 md:p-3 bg-emerald-500/10 text-emerald-500 rounded-lg md:rounded-xl hover:bg-emerald-500 hover:text-white transition-all"><Check className="w-4 h-4 md:w-5 md:h-5" /></button>
+                         <button onClick={() => adminRejectWithdrawal(tx.id)} className="p-2 md:p-3 bg-red-500/10 text-red-500 rounded-lg md:rounded-xl hover:bg-red-500 hover:text-white transition-all"><X className="w-4 h-4 md:w-5 md:h-5" /></button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800/50">
-                  {pendingWithdrawals.length === 0 ? (
-                    <tr><td colSpan={5} className="p-20 md:p-32 text-center text-gray-500 text-sm font-medium">Queue is currently clear.</td></tr>
-                  ) : (
-                    pendingWithdrawals.map(tx => {
-                      const user = users.find(u => u.id === tx.userId);
-                      return (
-                        <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors group">
-                          <td className="px-5 md:px-8 py-4 md:py-6 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-blue-600 flex items-center justify-center font-black text-xs md:text-sm text-white">{user?.name[0]}</div>
-                              <div className="flex flex-col">
-                                <span className="text-xs md:text-sm font-bold text-white">{user?.name}</span>
-                                <span className="text-[8px] md:text-[10px] text-gray-500 font-mono uppercase">{user?.referralCode}</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-5 md:px-8 py-4 md:py-6 font-mono font-black text-amber-500 text-sm md:text-lg">${tx.amount.toLocaleString()}</td>
-                          <td className="px-5 md:px-8 py-4 md:py-6">
-                            <span className="text-[8px] md:text-[9px] font-bold text-gray-400 uppercase tracking-widest bg-gray-800/80 px-2 md:px-3 py-1 rounded-lg border border-white/5">
-                              {tx.method || 'CRYPTO'}
-                            </span>
-                          </td>
-                          <td className="px-5 md:px-8 py-4 md:py-6 text-[10px] text-gray-500 hidden lg:table-cell font-medium">{new Date(tx.date).toLocaleDateString()}</td>
-                          <td className="px-5 md:px-8 py-4 md:py-6 text-right whitespace-nowrap">
-                            <div className="flex items-center justify-end gap-1.5 md:gap-2">
-                               <button onClick={() => adminApproveWithdrawal(tx.id)} className="p-2 md:p-3 bg-emerald-500/10 text-emerald-500 rounded-lg md:rounded-xl hover:bg-emerald-500 hover:text-white transition-all"><Check className="w-4 h-4 md:w-5 md:h-5" /></button>
-                               <button onClick={() => adminRejectWithdrawal(tx.id)} className="p-2 md:p-3 bg-red-500/10 text-red-500 rounded-lg md:rounded-xl hover:bg-red-500 hover:text-white transition-all"><X className="w-4 h-4 md:w-5 md:h-5" /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                );
+              })
+            )}
+          </AdminTable>
         )}
 
-        {/* TAB: MEMBERS */}
         {activeTab === 'users' && (
-          <div className="bg-[#0e121a] border border-gray-800 rounded-[24px] md:rounded-[32px] overflow-hidden animate-in slide-in-from-right-4 duration-300">
-            <div className="p-5 md:p-8 border-b border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#141922]/30">
-               <h3 className="text-lg md:text-xl font-bold">Network Directory ({users.length})</h3>
-               <button className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all border border-white/10"><UserPlus className="w-4 h-4" /> New User</button>
-            </div>
-            <div className="overflow-x-auto no-scrollbar">
-              <table className="w-full text-left">
-                <thead className="bg-[#141922]/50 text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                  <tr>
-                    <th className="px-5 md:px-8 py-4 md:py-5">User Profile</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5">Balance</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5 hidden md:table-cell">Stakes</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5">Status</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5 text-right">Ops</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800/50">
-                  {users.map(u => (
-                    <tr key={u.id} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="px-5 md:px-8 py-4 md:py-6 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center font-black text-xs md:text-sm ${u.role === UserRole.ADMIN ? 'bg-amber-600' : 'bg-blue-600'}`}>
-                            {u.role === UserRole.ADMIN ? <ShieldAlert className="w-4 h-4 md:w-6 md:h-6 text-white" /> : u.name[0]}
-                          </div>
-                          <div className="flex flex-col">
-                             <span className="text-xs md:text-sm font-bold text-white">{u.name}</span>
-                             <span className="text-[8px] md:text-[10px] text-gray-600 font-mono truncate max-w-[120px] md:max-w-none">{u.email}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 md:px-8 py-4 md:py-6">
-                        <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => handleEditUserBalance(u.id)}>
-                          <span className="font-mono font-black text-emerald-500 text-sm md:text-lg">${u.balance.toLocaleString()}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 md:px-8 py-4 md:py-6 hidden md:table-cell font-mono text-xs text-gray-500 font-bold">${u.totalInvested.toLocaleString()}</td>
-                      <td className="px-5 md:px-8 py-4 md:py-6">
-                        <span className={`px-2 md:px-3 py-1 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-widest border ${u.isBlocked ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
-                          {u.isBlocked ? 'Block' : 'Live'}
-                        </span>
-                      </td>
-                      <td className="px-5 md:px-8 py-4 md:py-6 text-right whitespace-nowrap">
-                         <div className="flex items-center justify-end gap-1.5 md:gap-2">
-                           <button className="p-2 bg-white/5 rounded-lg text-gray-500"><Edit className="w-3.5 h-3.5 md:w-4 md:h-4" /></button>
-                           {u.role !== UserRole.ADMIN && (
-                              <button onClick={() => adminUpdateUser(u.id, { isBlocked: !u.isBlocked })} className={`p-2 rounded-lg border border-white/5 ${u.isBlocked ? 'text-emerald-500 hover:bg-emerald-500 hover:text-white' : 'text-red-500 hover:bg-red-500 hover:text-white'}`}>
-                                {u.isBlocked ? <Check className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <ShieldAlert className="w-3.5 h-3.5 md:w-4 md:h-4" />}
-                              </button>
-                           )}
-                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <AdminTable 
+            title={`Network Directory (${users.length})`} 
+            headers={['User Profile', 'Balance', 'Stakes', 'Status', 'Ops']}
+            action={<button className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all border border-white/10"><UserPlus className="w-4 h-4" /> New User</button>}
+          >
+            {users.map(u => (
+              <tr key={u.id} className="hover:bg-white/[0.02] transition-colors group">
+                <td className="px-5 md:px-8 py-4 md:py-6 whitespace-nowrap">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center font-black text-xs md:text-sm ${u.role === UserRole.ADMIN ? 'bg-amber-600' : 'bg-blue-600'}`}>
+                      {u.role === UserRole.ADMIN ? <ShieldAlert className="w-4 h-4 md:w-6 md:h-6 text-white" /> : u.name[0]}
+                    </div>
+                    <div className="flex flex-col">
+                       <span className="text-xs md:text-sm font-bold text-white">{u.name}</span>
+                       <span className="text-[8px] md:text-[10px] text-gray-600 font-mono truncate max-w-[120px] md:max-w-none">{u.email}</span>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-5 md:px-8 py-4 md:py-6">
+                  <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => handleEditUserBalance(u.id)}>
+                    <span className="font-mono font-black text-emerald-500 text-sm md:text-lg">${u.balance.toLocaleString()}</span>
+                  </div>
+                </td>
+                <td className="px-5 md:px-8 py-4 md:py-6 font-mono text-xs text-gray-500 font-bold">${u.totalInvested.toLocaleString()}</td>
+                <td className="px-5 md:px-8 py-4 md:py-6">
+                  <StatusBadge status={u.isBlocked ? 'Blocked' : 'Live'} variant={u.isBlocked ? 'danger' : 'success'} />
+                </td>
+                <td className="px-5 md:px-8 py-4 md:py-6 text-right whitespace-nowrap">
+                   <div className="flex items-center justify-end gap-1.5 md:gap-2">
+                     <button className="p-2 bg-white/5 rounded-lg text-gray-500"><Edit className="w-3.5 h-3.5 md:w-4 md:h-4" /></button>
+                     {u.role !== UserRole.ADMIN && (
+                        <button onClick={() => adminUpdateUser(u.id, { isBlocked: !u.isBlocked })} className={`p-2 rounded-lg border border-white/5 ${u.isBlocked ? 'text-emerald-500 hover:bg-emerald-500 hover:text-white' : 'text-red-500 hover:bg-red-500 hover:text-white'}`}>
+                          {u.isBlocked ? <Check className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <ShieldAlert className="w-3.5 h-3.5 md:w-4 md:h-4" />}
+                        </button>
+                     )}
+                   </div>
+                </td>
+              </tr>
+            ))}
+          </AdminTable>
         )}
 
-        {/* TAB: PLANS */}
         {activeTab === 'plans' && (
           <div className="space-y-6 md:space-y-8 animate-in zoom-in-95 duration-300">
-            <div className="bg-[#0e121a] border border-gray-800 p-6 md:p-10 rounded-[32px] md:rounded-[48px] flex flex-col sm:flex-row justify-between items-center gap-6">
-               <div className="text-center sm:text-left">
+            <div className="bg-[#0e121a] border border-gray-800 p-6 md:p-10 rounded-[32px] md:rounded-[48px] flex flex-col sm:flex-row justify-between items-center gap-6 text-center sm:text-left">
+               <div>
                   <h4 className="text-2xl md:text-3xl font-black text-white mb-2">ROI Engine</h4>
                   <p className="text-xs md:text-sm text-gray-500 font-medium">Platform-wide yield configuration center.</p>
                </div>
@@ -329,60 +252,37 @@ export const AdminPanel = () => {
           </div>
         )}
 
-        {/* TAB: LEDGER */}
         {activeTab === 'ledger' && (
-          <div className="bg-[#0e121a] border border-gray-800 rounded-[24px] md:rounded-[32px] overflow-hidden animate-in fade-in duration-300">
-            <div className="p-5 md:p-8 border-b border-gray-800 bg-[#141922]/30 flex items-center gap-3">
-               <History className="w-5 h-5 md:w-6 md:h-6 text-gray-500" />
-               <h3 className="text-lg md:text-xl font-bold">System Ledger</h3>
-            </div>
-            <div className="overflow-x-auto no-scrollbar">
-              <table className="w-full text-left">
-                <thead className="bg-[#141922]/50 text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                  <tr>
-                    <th className="px-5 md:px-8 py-4 md:py-5">Target</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5">Type</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5">Amount</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5 hidden lg:table-cell">Time</th>
-                    <th className="px-5 md:px-8 py-4 md:py-5">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800/50">
-                  {transactions.slice(0, 50).map(tx => {
-                    const user = users.find(u => u.id === tx.userId);
-                    return (
-                      <tr key={tx.id} className="hover:bg-white/[0.01] transition-colors group">
-                        <td className="px-5 md:px-8 py-4 md:py-6 whitespace-nowrap">
-                          <span className="text-xs md:text-sm font-bold text-white">{user?.name || 'SYS'}</span>
-                          <span className="block text-[8px] text-gray-600 font-mono">#{tx.id.substr(0,8)}</span>
-                        </td>
-                        <td className="px-5 md:px-8 py-4 md:py-6">
-                          <span className="text-[8px] md:text-[10px] font-black uppercase text-gray-500 border border-white/5 px-2 py-1 rounded-lg">{tx.type}</span>
-                        </td>
-                        <td className="px-5 md:px-8 py-4 md:py-6">
-                           <span className={`text-sm md:text-base font-black font-mono ${tx.type === 'WITHDRAWAL' ? 'text-red-500' : 'text-emerald-500'}`}>
-                             {tx.type === 'WITHDRAWAL' ? '-' : '+'}${tx.amount.toLocaleString()}
-                           </span>
-                        </td>
-                        <td className="px-5 md:px-8 py-4 md:py-6 text-[9px] md:text-[10px] text-gray-600 font-bold hidden lg:table-cell">{new Date(tx.date).toLocaleString()}</td>
-                        <td className="px-5 md:px-8 py-4 md:py-6">
-                           <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase border ${
-                            tx.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
-                            tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
-                          }`}>
-                            {tx.status}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <AdminTable title="System Ledger" headers={['Target', 'Type', 'Amount', 'Time', 'Status']}>
+            {transactions.slice(0, 50).map(tx => {
+              const user = users.find(u => u.id === tx.userId);
+              return (
+                <tr key={tx.id} className="hover:bg-white/[0.01] transition-colors group">
+                  <td className="px-5 md:px-8 py-4 md:py-6 whitespace-nowrap">
+                    <span className="text-xs md:text-sm font-bold text-white">{user?.name || 'SYS'}</span>
+                    <span className="block text-[8px] text-gray-600 font-mono">#{tx.id.substr(0,8)}</span>
+                  </td>
+                  <td className="px-5 md:px-8 py-4 md:py-6">
+                    <span className="text-[8px] md:text-[10px] font-black uppercase text-gray-500 border border-white/5 px-2 py-1 rounded-lg">{tx.type}</span>
+                  </td>
+                  <td className="px-5 md:px-8 py-4 md:py-6">
+                     <span className={`text-sm md:text-base font-black font-mono ${tx.type === 'WITHDRAWAL' ? 'text-red-500' : 'text-emerald-500'}`}>
+                       {tx.type === 'WITHDRAWAL' ? '-' : '+'}${tx.amount.toLocaleString()}
+                     </span>
+                  </td>
+                  <td className="px-5 md:px-8 py-4 md:py-6 text-[9px] md:text-[10px] text-gray-600 font-bold">{new Date(tx.date).toLocaleString()}</td>
+                  <td className="px-5 md:px-8 py-4 md:py-6">
+                    <StatusBadge 
+                      status={tx.status} 
+                      variant={tx.status === 'COMPLETED' ? 'success' : tx.status === 'PENDING' ? 'warning' : 'danger'} 
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </AdminTable>
         )}
 
-        {/* TAB: SYSTEM */}
         {activeTab === 'system' && (
           <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 md:space-y-12 animate-in slide-in-from-bottom-8 duration-700">
              <div className="text-center bg-[#0e121a] border border-gray-800 p-8 md:p-16 rounded-[40px] md:rounded-[64px] relative overflow-hidden">
@@ -414,7 +314,6 @@ export const AdminPanel = () => {
         )}
       </div>
 
-      {/* Responsive Plan Modal */}
       {isPlanModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-6 backdrop-blur-2xl bg-black/60">
           <div className="bg-[#0e121a] border border-white/10 w-full max-w-2xl rounded-[32px] md:rounded-[64px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
@@ -422,7 +321,7 @@ export const AdminPanel = () => {
               <h3 className="text-2xl md:text-4xl font-black">{editingPlan ? 'Refactor' : 'New Plan'}</h3>
               <button onClick={() => setIsPlanModalOpen(false)} className="text-gray-500 hover:text-white bg-white/5 p-3 rounded-xl"><X className="w-5 h-5" /></button>
             </div>
-            <form onSubmit={handleSavePlan} className="p-6 md:p-12 space-y-6 md:space-y-10 overflow-y-auto custom-scrollbar">
+            <form onSubmit={handleSavePlan} className="p-6 md:p-12 space-y-6 md:space-y-10 overflow-y-auto no-scrollbar">
               <div className="space-y-2">
                 <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Plan Name</label>
                 <input required name="name" defaultValue={editingPlan?.name} className="w-full bg-[#141922] border border-white/5 rounded-2xl px-5 md:px-8 py-4 md:py-5 outline-none focus:border-blue-500 text-white font-bold" />
