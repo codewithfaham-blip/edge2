@@ -1,29 +1,26 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
-import { ShieldAlert, Users as UsersIcon, Wallet, Layers, Check, X, Edit, Trash2, Plus, Save, Activity, Terminal, RefreshCw } from 'lucide-react';
-import { TransactionStatus, UserRole, InvestmentPlan } from '../types';
+import { 
+  ShieldAlert, Users as UsersIcon, Wallet, Layers, Check, X, Edit, Trash2, 
+  Plus, Save, Activity, Terminal, RefreshCw, BarChart3, Settings, 
+  History, CreditCard, LayoutGrid, ArrowUpCircle, UserPlus, Fingerprint,
+  Clock
+} from 'lucide-react';
+import { TransactionStatus, UserRole, InvestmentPlan, User } from '../types';
 
 export const AdminPanel = () => {
-  // Added 'investments' to the destructuring of useApp()
   const { 
     users, transactions, plans, platformStats, investments,
     adminApproveWithdrawal, adminRejectWithdrawal, adminUpdateUser, 
     adminDeletePlan, adminCreatePlan, adminUpdatePlan, debugTriggerProfit 
   } = useApp();
   
-  const [activeTab, setActiveTab] = useState<'users' | 'withdrawals' | 'plans' | 'transactions' | 'debug'>('withdrawals');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'plans' | 'ledger' | 'system'>('overview');
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<InvestmentPlan | null>(null);
 
   const pendingWithdrawals = transactions.filter(t => t.type === 'WITHDRAWAL' && t.status === TransactionStatus.PENDING);
-
-  const statCards = [
-    { label: 'Total Members', val: platformStats.totalUsers, icon: UsersIcon, color: 'text-blue-500' },
-    { label: 'Platform Balance', val: `$${platformStats.platformBalance.toLocaleString()}`, icon: Wallet, color: 'text-emerald-500' },
-    { label: 'Capital Invested', val: `$${platformStats.totalInvested.toLocaleString()}`, icon: Layers, color: 'text-purple-500' },
-    { label: 'Pending Payouts', val: platformStats.pendingWithdrawals, icon: ShieldAlert, color: 'text-amber-500' },
-  ];
 
   const handleOpenPlanModal = (plan?: InvestmentPlan) => {
     setEditingPlan(plan || null);
@@ -50,115 +47,178 @@ export const AdminPanel = () => {
     setIsPlanModalOpen(false);
   };
 
+  const handleEditUserBalance = (userId: string) => {
+    const newBalanceStr = prompt("Enter new balance amount:");
+    if (newBalanceStr !== null) {
+      const amount = parseFloat(newBalanceStr);
+      if (!isNaN(amount)) {
+        adminUpdateUser(userId, { balance: amount });
+      }
+    }
+  };
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-20 md:pb-0">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-white flex items-center gap-3">
-            <Activity className="text-blue-500 w-8 h-8" /> Platform Administration
+          <h2 className="text-2xl md:text-3xl font-black text-white flex items-center gap-3">
+            <ShieldAlert className="text-blue-500 w-6 h-6 md:w-8 md:h-8" /> Command Center
           </h2>
-          <p className="text-gray-500 text-sm">System oversight and financial control panel</p>
+          <p className="text-gray-500 text-xs md:text-sm font-medium">Platform Management & Oversight</p>
         </div>
-        <div className="bg-blue-600/10 border border-blue-600/20 px-4 py-2 rounded-xl flex items-center gap-2">
-           <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-           <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">System Online</span>
+        <div className="flex items-center gap-2 md:gap-3">
+           <button 
+             onClick={debugTriggerProfit}
+             className="flex items-center gap-2 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-500 hover:text-white px-3 md:px-4 py-2 md:py-2.5 rounded-xl text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-all border border-emerald-500/20"
+           >
+             <RefreshCw className="w-3 md:w-3.5 h-3 md:h-3.5" /> Force Profit
+           </button>
+           <div className="bg-blue-600/10 border border-blue-600/20 px-3 md:px-4 py-2 rounded-xl flex items-center gap-2">
+             <div className="w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-blue-500 animate-pulse" />
+             <span className="text-[9px] md:text-[10px] font-bold text-blue-500 uppercase tracking-widest">Active</span>
+           </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((s, i) => (
-          <div key={i} className="bg-[#0e121a] border border-gray-800 p-6 rounded-3xl hover:bg-[#141922] transition-colors group">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">{s.label}</span>
-              <s.icon className={`w-5 h-5 ${s.color} group-hover:scale-110 transition-transform`} />
-            </div>
-            <h3 className="text-2xl font-bold font-mono text-white">{s.val}</h3>
-          </div>
+      {/* Responsive Sub-Navigation */}
+      <div className="flex border-b border-gray-800 bg-[#0e121a]/50 backdrop-blur-md sticky top-20 z-20 p-1.5 gap-1 overflow-x-auto scrollbar-hide rounded-2xl no-scrollbar">
+        {[
+          { id: 'overview', label: 'Dashboard', icon: LayoutGrid },
+          { id: 'withdrawals', label: 'Queue', icon: CreditCard, badge: pendingWithdrawals.length },
+          { id: 'users', label: 'Members', icon: UsersIcon },
+          { id: 'plans', label: 'Assets', icon: Layers },
+          { id: 'ledger', label: 'Ledger', icon: History },
+          { id: 'system', label: 'System', icon: Settings },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`px-3 md:px-5 py-2 md:py-3 rounded-xl font-bold transition-all flex items-center gap-2 md:gap-3 whitespace-nowrap ${
+              activeTab === tab.id ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <tab.icon className="w-3.5 md:w-4 h-3.5 md:h-4" />
+            <span className="text-[10px] md:text-sm uppercase tracking-tight">{tab.label}</span>
+            {tab.badge ? (
+              <span className={`text-[8px] md:text-[9px] px-1.5 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-white text-blue-600' : 'bg-red-500 text-white animate-pulse'}`}>
+                {tab.badge}
+              </span>
+            ) : null}
+          </button>
         ))}
       </div>
 
-      <div className="bg-[#0e121a] border border-gray-800 rounded-[32px] overflow-hidden shadow-2xl">
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-gray-800 bg-[#141922]/30 p-2 gap-1 overflow-x-auto scrollbar-hide">
-          {[
-            { id: 'withdrawals', label: 'Withdrawals', count: pendingWithdrawals.length },
-            { id: 'users', label: 'User Directory', count: users.length },
-            { id: 'plans', label: 'ROI Packages', count: plans.length },
-            { id: 'transactions', label: 'Ledger History', count: transactions.length },
-            { id: 'debug', label: 'Developer Console', icon: Terminal },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-5 py-3 rounded-2xl font-bold transition-all flex items-center gap-3 whitespace-nowrap ${
-                activeTab === tab.id ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              {tab.icon && <tab.icon className="w-4 h-4" />}
-              {tab.label}
-              {tab.count !== undefined && (
-                <span className={`text-[9px] px-2 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-white/20' : 'bg-gray-800'}`}>
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+      {/* Content Sections */}
+      <div className="min-h-[400px]">
+        
+        {/* TAB: OVERVIEW */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6 md:space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+              {[
+                { label: 'Network Value', val: `$${platformStats.platformBalance.toLocaleString()}`, icon: Wallet, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                { label: 'Active Capital', val: `$${platformStats.totalInvested.toLocaleString()}`, icon: Layers, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+                { label: 'Withdrawals', val: `$${platformStats.totalWithdrawals.toLocaleString()}`, icon: ArrowUpCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                { label: 'Network Size', val: platformStats.totalUsers, icon: UsersIcon, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+              ].map((s, i) => (
+                <div key={i} className="bg-[#0e121a] border border-gray-800 p-5 md:p-6 rounded-[24px] md:rounded-[32px] hover:bg-[#141922] transition-all group">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className={`p-2.5 md:p-3 rounded-2xl ${s.bg}`}>
+                      <s.icon className={`w-4 h-4 md:w-5 md:h-5 ${s.color}`} />
+                    </div>
+                    <span className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-widest">{s.label}</span>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-black font-mono text-white">{s.val}</h3>
+                </div>
+              ))}
+            </div>
 
-        <div className="p-0">
-          {activeTab === 'withdrawals' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-[#141922]/50 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <div className="bg-[#0e121a] border border-gray-800 p-6 md:p-8 rounded-[32px] md:rounded-[40px] flex flex-col justify-between hover:border-emerald-500/30 transition-all group">
+                <div>
+                  <div className="flex items-center gap-3 mb-4 md:mb-6">
+                    <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500"><CreditCard className="w-5 h-5 md:w-6 md:h-6" /></div>
+                    <h4 className="text-lg md:text-xl font-bold">Financial Ops</h4>
+                  </div>
+                  <p className="text-xs md:text-sm text-gray-500 mb-6 md:mb-8 leading-relaxed">Approve or reject capital extraction requests from members.</p>
+                </div>
+                <div className="flex items-center gap-2 md:gap-3">
+                  <button onClick={() => setActiveTab('withdrawals')} className="flex-1 py-3 md:py-4 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-500 hover:text-white rounded-2xl font-bold text-[10px] md:text-xs transition-all uppercase tracking-widest">Withdrawals ({pendingWithdrawals.length})</button>
+                  <button onClick={() => setActiveTab('ledger')} className="p-3 md:p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-gray-400 transition-all"><History className="w-4 h-4 md:w-5 md:h-5" /></button>
+                </div>
+              </div>
+
+              <div className="bg-[#0e121a] border border-gray-800 p-6 md:p-8 rounded-[32px] md:rounded-[40px] flex flex-col justify-between hover:border-blue-500/30 transition-all group">
+                <div>
+                  <div className="flex items-center gap-3 mb-4 md:mb-6">
+                    <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500"><Layers className="w-5 h-5 md:w-6 md:h-6" /></div>
+                    <h4 className="text-lg md:text-xl font-bold">ROI Packages</h4>
+                  </div>
+                  <p className="text-xs md:text-sm text-gray-500 mb-6 md:mb-8 leading-relaxed">Define and optimize investment tiers and daily interest engines.</p>
+                </div>
+                <button onClick={() => setActiveTab('plans')} className="w-full py-3 md:py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-[10px] md:text-xs transition-all uppercase tracking-widest">Manage Plans ({plans.length})</button>
+              </div>
+
+              <div className="bg-[#0e121a] border border-gray-800 p-6 md:p-8 rounded-[32px] md:rounded-[40px] flex flex-col justify-between hover:border-purple-500/30 transition-all group md:col-span-2 lg:col-span-1">
+                <div>
+                  <div className="flex items-center gap-3 mb-4 md:mb-6">
+                    <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-500"><Fingerprint className="w-5 h-5 md:w-6 md:h-6" /></div>
+                    <h4 className="text-lg md:text-xl font-bold">User Audit</h4>
+                  </div>
+                  <p className="text-xs md:text-sm text-gray-500 mb-6 md:mb-8 leading-relaxed">Real-time control over account status and verified balances.</p>
+                </div>
+                <button onClick={() => setActiveTab('users')} className="w-full py-3 md:py-4 bg-purple-600/10 hover:bg-purple-600 text-purple-500 hover:text-white rounded-2xl font-bold text-[10px] md:text-xs transition-all uppercase tracking-widest border border-purple-500/20">Database Access</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: WITHDRAWALS */}
+        {activeTab === 'withdrawals' && (
+          <div className="bg-[#0e121a] border border-gray-800 rounded-[24px] md:rounded-[32px] overflow-hidden animate-in fade-in duration-300">
+            <div className="p-5 md:p-8 border-b border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#141922]/30">
+              <h3 className="text-lg md:text-xl font-bold">Withdrawal Queue</h3>
+              <span className="bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest border border-red-500/20">Action Required</span>
+            </div>
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full text-left">
+                <thead className="bg-[#141922]/50 text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                   <tr>
-                    <th className="px-8 py-5">Initiator</th>
-                    <th className="px-8 py-5">Requested Amount</th>
-                    <th className="px-8 py-5">Payment Method</th>
-                    <th className="px-8 py-5">Date</th>
-                    <th className="px-8 py-5 text-right">Actions</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5">Entity</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5">Amount</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5">Method</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5 hidden lg:table-cell">Date</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5 text-right">Process</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800/50">
                   {pendingWithdrawals.length === 0 ? (
-                    <tr><td colSpan={5} className="p-24 text-center text-gray-500">No pending withdrawal requests found in queue.</td></tr>
+                    <tr><td colSpan={5} className="p-20 md:p-32 text-center text-gray-500 text-sm font-medium">Queue is currently clear.</td></tr>
                   ) : (
                     pendingWithdrawals.map(tx => {
                       const user = users.find(u => u.id === tx.userId);
                       return (
-                        <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="px-8 py-6">
+                        <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors group">
+                          <td className="px-5 md:px-8 py-4 md:py-6 whitespace-nowrap">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs">{user?.name[0]}</div>
+                              <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-blue-600 flex items-center justify-center font-black text-xs md:text-sm text-white">{user?.name[0]}</div>
                               <div className="flex flex-col">
-                                <span className="text-sm font-bold text-white">{user?.name}</span>
-                                <span className="text-[10px] text-gray-500">{user?.email}</span>
+                                <span className="text-xs md:text-sm font-bold text-white">{user?.name}</span>
+                                <span className="text-[8px] md:text-[10px] text-gray-500 font-mono uppercase">{user?.referralCode}</span>
                               </div>
                             </div>
                           </td>
-                          <td className="px-8 py-6 text-amber-400 font-mono font-bold">${tx.amount.toLocaleString()}</td>
-                          <td className="px-8 py-6">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-800/50 px-3 py-1 rounded-lg">
+                          <td className="px-5 md:px-8 py-4 md:py-6 font-mono font-black text-amber-500 text-sm md:text-lg">${tx.amount.toLocaleString()}</td>
+                          <td className="px-5 md:px-8 py-4 md:py-6">
+                            <span className="text-[8px] md:text-[9px] font-bold text-gray-400 uppercase tracking-widest bg-gray-800/80 px-2 md:px-3 py-1 rounded-lg border border-white/5">
                               {tx.method || 'CRYPTO'}
                             </span>
                           </td>
-                          <td className="px-8 py-6 text-xs text-gray-500">{new Date(tx.date).toLocaleDateString()}</td>
-                          <td className="px-8 py-6 text-right">
-                            <div className="flex items-center justify-end gap-3">
-                               <button 
-                                 onClick={() => adminApproveWithdrawal(tx.id)}
-                                 className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-lg hover:shadow-emerald-500/20"
-                                 title="Process Payout"
-                               >
-                                 <Check className="w-4 h-4" />
-                               </button>
-                               <button 
-                                 onClick={() => adminRejectWithdrawal(tx.id)}
-                                 className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-lg hover:shadow-red-500/20"
-                                 title="Reject Request"
-                               >
-                                 <X className="w-4 h-4" />
-                               </button>
+                          <td className="px-5 md:px-8 py-4 md:py-6 text-[10px] text-gray-500 hidden lg:table-cell font-medium">{new Date(tx.date).toLocaleDateString()}</td>
+                          <td className="px-5 md:px-8 py-4 md:py-6 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1.5 md:gap-2">
+                               <button onClick={() => adminApproveWithdrawal(tx.id)} className="p-2 md:p-3 bg-emerald-500/10 text-emerald-500 rounded-lg md:rounded-xl hover:bg-emerald-500 hover:text-white transition-all"><Check className="w-4 h-4 md:w-5 md:h-5" /></button>
+                               <button onClick={() => adminRejectWithdrawal(tx.id)} className="p-2 md:p-3 bg-red-500/10 text-red-500 rounded-lg md:rounded-xl hover:bg-red-500 hover:text-white transition-all"><X className="w-4 h-4 md:w-5 md:h-5" /></button>
                             </div>
                           </td>
                         </tr>
@@ -168,123 +228,147 @@ export const AdminPanel = () => {
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
+        )}
 
-          {activeTab === 'users' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-[#141922]/50 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+        {/* TAB: MEMBERS */}
+        {activeTab === 'users' && (
+          <div className="bg-[#0e121a] border border-gray-800 rounded-[24px] md:rounded-[32px] overflow-hidden animate-in slide-in-from-right-4 duration-300">
+            <div className="p-5 md:p-8 border-b border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#141922]/30">
+               <h3 className="text-lg md:text-xl font-bold">Network Directory ({users.length})</h3>
+               <button className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all border border-white/10"><UserPlus className="w-4 h-4" /> New User</button>
+            </div>
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full text-left">
+                <thead className="bg-[#141922]/50 text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                   <tr>
-                    <th className="px-8 py-5">Network Member</th>
-                    <th className="px-8 py-5">Wallet Balance</th>
-                    <th className="px-8 py-5">Total Stakes</th>
-                    <th className="px-8 py-5">Account Status</th>
-                    <th className="px-8 py-5 text-right">Management</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5">User Profile</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5">Balance</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5 hidden md:table-cell">Stakes</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5">Status</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5 text-right">Ops</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800/50">
                   {users.map(u => (
-                    <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="px-8 py-6">
+                    <tr key={u.id} className="hover:bg-white/[0.02] transition-colors group">
+                      <td className="px-5 md:px-8 py-4 md:py-6 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${u.role === UserRole.ADMIN ? 'bg-amber-600' : 'bg-blue-600'}`}>
-                            {u.role === UserRole.ADMIN ? <ShieldAlert className="w-5 h-5" /> : u.name[0]}
+                          <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center font-black text-xs md:text-sm ${u.role === UserRole.ADMIN ? 'bg-amber-600' : 'bg-blue-600'}`}>
+                            {u.role === UserRole.ADMIN ? <ShieldAlert className="w-4 h-4 md:w-6 md:h-6 text-white" /> : u.name[0]}
                           </div>
                           <div className="flex flex-col">
-                             <span className="text-sm font-bold text-white">{u.name}</span>
-                             <span className="text-xs text-gray-600 font-mono">{u.email}</span>
+                             <span className="text-xs md:text-sm font-bold text-white">{u.name}</span>
+                             <span className="text-[8px] md:text-[10px] text-gray-600 font-mono truncate max-w-[120px] md:max-w-none">{u.email}</span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6 font-mono font-bold text-emerald-400 text-sm">${u.balance.toLocaleString()}</td>
-                      <td className="px-8 py-6 font-mono text-xs text-gray-500">${u.totalInvested.toLocaleString()}</td>
-                      <td className="px-8 py-6">
-                        <span className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest ${u.isBlocked ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                          {u.isBlocked ? 'Terminated' : 'Operational'}
+                      <td className="px-5 md:px-8 py-4 md:py-6">
+                        <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => handleEditUserBalance(u.id)}>
+                          <span className="font-mono font-black text-emerald-500 text-sm md:text-lg">${u.balance.toLocaleString()}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 md:px-8 py-4 md:py-6 hidden md:table-cell font-mono text-xs text-gray-500 font-bold">${u.totalInvested.toLocaleString()}</td>
+                      <td className="px-5 md:px-8 py-4 md:py-6">
+                        <span className={`px-2 md:px-3 py-1 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-widest border ${u.isBlocked ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
+                          {u.isBlocked ? 'Block' : 'Live'}
                         </span>
                       </td>
-                      <td className="px-8 py-6 text-right">
-                         {u.role !== UserRole.ADMIN && (
-                            <button 
-                             onClick={() => adminUpdateUser(u.id, { isBlocked: !u.isBlocked })}
-                             className={`text-[9px] font-bold uppercase tracking-[0.2em] px-4 py-2 rounded-xl border border-white/5 transition-all ${u.isBlocked ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white' : 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white'}`}
-                            >
-                              {u.isBlocked ? 'Activate' : 'Suspend'}
-                            </button>
-                         )}
+                      <td className="px-5 md:px-8 py-4 md:py-6 text-right whitespace-nowrap">
+                         <div className="flex items-center justify-end gap-1.5 md:gap-2">
+                           <button className="p-2 bg-white/5 rounded-lg text-gray-500"><Edit className="w-3.5 h-3.5 md:w-4 md:h-4" /></button>
+                           {u.role !== UserRole.ADMIN && (
+                              <button onClick={() => adminUpdateUser(u.id, { isBlocked: !u.isBlocked })} className={`p-2 rounded-lg border border-white/5 ${u.isBlocked ? 'text-emerald-500 hover:bg-emerald-500 hover:text-white' : 'text-red-500 hover:bg-red-500 hover:text-white'}`}>
+                                {u.isBlocked ? <Check className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <ShieldAlert className="w-3.5 h-3.5 md:w-4 md:h-4" />}
+                              </button>
+                           )}
+                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
+        )}
 
-          {activeTab === 'plans' && (
-            <div className="p-8">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
-                 <div>
-                    <h4 className="text-xl font-bold text-white">Investment Asset Configuration</h4>
-                    <p className="text-sm text-gray-500">Define ROI metrics and capital requirements for the public.</p>
-                 </div>
-                 <button 
-                  onClick={() => handleOpenPlanModal()}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-2xl text-sm font-bold transition-all shadow-xl shadow-blue-900/30"
-                 >
-                   <Plus className="w-5 h-5" /> Deploy New Package
-                 </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {plans.map(p => (
-                  <div key={p.id} className="bg-[#141922] border border-gray-800 p-8 rounded-[40px] relative group hover:border-blue-500/40 transition-all shadow-lg">
-                    <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => handleOpenPlanModal(p)} className="p-3 bg-gray-800 rounded-xl hover:bg-blue-600 text-white transition-colors"><Edit className="w-4 h-4" /></button>
-                      <button onClick={() => adminDeletePlan(p.id)} className="p-3 bg-gray-800 rounded-xl hover:bg-red-600 text-white transition-colors"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                    <div className="mb-6">
-                      <h5 className="font-bold text-xl text-white mb-2">{p.name}</h5>
-                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">{p.durationDays} Day Cycle</span>
-                    </div>
-                    <p className="text-blue-500 font-bold text-4xl mb-8">{p.roi}% <span className="text-xs text-gray-600 font-normal">DAILY YIELD</span></p>
-                    <div className="space-y-4 text-xs font-medium">
-                      <div className="flex justify-between items-center text-gray-400"><span>Minimum Deposit</span> <span className="text-white font-mono font-bold text-sm">${p.minAmount}</span></div>
-                      <div className="flex justify-between items-center text-gray-400"><span>Maximum Deposit</span> <span className="text-white font-mono font-bold text-sm">${p.maxAmount}</span></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+        {/* TAB: PLANS */}
+        {activeTab === 'plans' && (
+          <div className="space-y-6 md:space-y-8 animate-in zoom-in-95 duration-300">
+            <div className="bg-[#0e121a] border border-gray-800 p-6 md:p-10 rounded-[32px] md:rounded-[48px] flex flex-col sm:flex-row justify-between items-center gap-6">
+               <div className="text-center sm:text-left">
+                  <h4 className="text-2xl md:text-3xl font-black text-white mb-2">ROI Engine</h4>
+                  <p className="text-xs md:text-sm text-gray-500 font-medium">Platform-wide yield configuration center.</p>
+               </div>
+               <button onClick={() => handleOpenPlanModal()} className="w-full sm:w-auto flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 px-8 py-4 md:py-5 rounded-2xl md:rounded-[24px] text-sm md:text-lg font-black transition-all shadow-xl">
+                 <Plus className="w-5 h-5 md:w-6 md:h-6" /> Create Plan
+               </button>
             </div>
-          )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+              {plans.map(p => (
+                <div key={p.id} className="bg-[#0e121a] border border-gray-800 p-8 md:p-10 rounded-[32px] md:rounded-[48px] relative group overflow-hidden">
+                  <div className="absolute top-4 right-4 flex gap-2 sm:opacity-0 group-hover:opacity-100 transition-all">
+                    <button onClick={() => handleOpenPlanModal(p)} className="p-2 md:p-3 bg-gray-800 rounded-xl hover:bg-blue-600 text-white"><Edit className="w-4 h-4 md:w-5 md:h-5" /></button>
+                    <button onClick={() => adminDeletePlan(p.id)} className="p-2 md:p-3 bg-gray-800 rounded-xl hover:bg-red-600 text-white"><Trash2 className="w-4 h-4 md:w-5 md:h-5" /></button>
+                  </div>
+                  <div className="mb-8">
+                    <h5 className="font-black text-xl md:text-2xl text-white mb-2">{p.name}</h5>
+                    <div className="flex items-center gap-2 text-gray-600 text-[10px] font-bold uppercase tracking-widest"><Clock className="w-3 h-3" /> {p.durationDays} Days</div>
+                  </div>
+                  <div className="mb-8">
+                     <p className="text-blue-500 font-black text-4xl md:text-6xl font-mono tracking-tighter">{p.roi}%</p>
+                     <p className="text-[9px] md:text-[10px] text-gray-600 font-black uppercase tracking-widest mt-1">Daily Yield</p>
+                  </div>
+                  <div className="space-y-3 pt-6 border-t border-gray-800/50 text-[10px] md:text-xs">
+                    <div className="flex justify-between items-center"><span className="text-gray-500 font-bold uppercase tracking-widest">Min</span> <span className="text-white font-mono font-black text-sm md:text-base">${p.minAmount}</span></div>
+                    <div className="flex justify-between items-center"><span className="text-gray-500 font-bold uppercase tracking-widest">Max</span> <span className="text-white font-mono font-black text-sm md:text-base">${p.maxAmount}</span></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-          {activeTab === 'transactions' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-[#141922]/50 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+        {/* TAB: LEDGER */}
+        {activeTab === 'ledger' && (
+          <div className="bg-[#0e121a] border border-gray-800 rounded-[24px] md:rounded-[32px] overflow-hidden animate-in fade-in duration-300">
+            <div className="p-5 md:p-8 border-b border-gray-800 bg-[#141922]/30 flex items-center gap-3">
+               <History className="w-5 h-5 md:w-6 md:h-6 text-gray-500" />
+               <h3 className="text-lg md:text-xl font-bold">System Ledger</h3>
+            </div>
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full text-left">
+                <thead className="bg-[#141922]/50 text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                   <tr>
-                    <th className="px-8 py-5">Beneficiary</th>
-                    <th className="px-8 py-5">Ledger Type</th>
-                    <th className="px-8 py-5">Amount</th>
-                    <th className="px-8 py-5">Timestamp</th>
-                    <th className="px-8 py-5">Confirmation</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5">Target</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5">Type</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5">Amount</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5 hidden lg:table-cell">Time</th>
+                    <th className="px-5 md:px-8 py-4 md:py-5">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800/50">
                   {transactions.slice(0, 50).map(tx => {
                     const user = users.find(u => u.id === tx.userId);
                     return (
-                      <tr key={tx.id} className="hover:bg-white/[0.01] transition-colors">
-                        <td className="px-8 py-6">
-                          <span className="text-sm font-medium text-white">{user?.name || 'TERMINATED_USER'}</span>
+                      <tr key={tx.id} className="hover:bg-white/[0.01] transition-colors group">
+                        <td className="px-5 md:px-8 py-4 md:py-6 whitespace-nowrap">
+                          <span className="text-xs md:text-sm font-bold text-white">{user?.name || 'SYS'}</span>
+                          <span className="block text-[8px] text-gray-600 font-mono">#{tx.id.substr(0,8)}</span>
                         </td>
-                        <td className="px-8 py-6">
-                          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 border border-white/5 px-2 py-1 rounded">{tx.type}</span>
+                        <td className="px-5 md:px-8 py-4 md:py-6">
+                          <span className="text-[8px] md:text-[10px] font-black uppercase text-gray-500 border border-white/5 px-2 py-1 rounded-lg">{tx.type}</span>
                         </td>
-                        <td className="px-8 py-6 font-mono font-bold text-white text-sm">${tx.amount.toLocaleString()}</td>
-                        <td className="px-8 py-6 text-[10px] text-gray-600 uppercase tracking-tighter">{new Date(tx.date).toLocaleString()}</td>
-                        <td className="px-8 py-6">
-                           <span className={`px-2 py-1 rounded-lg text-[8px] font-bold uppercase tracking-[0.2em] ${
-                            tx.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-500' :
-                            tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-500' : 'bg-red-500/10 text-red-500'
+                        <td className="px-5 md:px-8 py-4 md:py-6">
+                           <span className={`text-sm md:text-base font-black font-mono ${tx.type === 'WITHDRAWAL' ? 'text-red-500' : 'text-emerald-500'}`}>
+                             {tx.type === 'WITHDRAWAL' ? '-' : '+'}${tx.amount.toLocaleString()}
+                           </span>
+                        </td>
+                        <td className="px-5 md:px-8 py-4 md:py-6 text-[9px] md:text-[10px] text-gray-600 font-bold hidden lg:table-cell">{new Date(tx.date).toLocaleString()}</td>
+                        <td className="px-5 md:px-8 py-4 md:py-6">
+                           <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase border ${
+                            tx.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                            tx.status === 'PENDING' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
                           }`}>
                             {tx.status}
                           </span>
@@ -295,92 +379,76 @@ export const AdminPanel = () => {
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
+        )}
 
-          {activeTab === 'debug' && (
-            <div className="p-12 space-y-10 max-w-4xl mx-auto">
-               <div className="text-center">
-                  <Terminal className="w-16 h-16 text-blue-500 mx-auto mb-6" />
-                  <h3 className="text-2xl font-bold mb-4">Internal Debugging Console</h3>
-                  <p className="text-gray-400">Developer tools to manipulate system clock and simulate platform events.</p>
-               </div>
+        {/* TAB: SYSTEM */}
+        {activeTab === 'system' && (
+          <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 md:space-y-12 animate-in slide-in-from-bottom-8 duration-700">
+             <div className="text-center bg-[#0e121a] border border-gray-800 p-8 md:p-16 rounded-[40px] md:rounded-[64px] relative overflow-hidden">
+                <Terminal className="w-12 h-12 md:w-20 md:h-20 text-blue-500 mx-auto mb-6 md:mb-8 animate-pulse" />
+                <h3 className="text-2xl md:text-4xl font-black mb-2 md:mb-4">Internal Mainframe</h3>
+                <p className="text-xs md:text-gray-500 max-w-xl mx-auto font-medium">Reset environment or force distribution cycles.</p>
+             </div>
 
-               <div className="grid md:grid-cols-2 gap-8">
-                  <div className="bg-[#141922] p-8 rounded-[40px] border border-blue-500/20 space-y-6">
-                     <div className="flex items-center gap-3 mb-2">
-                        <RefreshCw className="w-6 h-6 text-blue-500" />
-                        <h4 className="font-bold text-lg">Simulator Time Warp</h4>
-                     </div>
-                     <p className="text-sm text-gray-500 leading-relaxed">
-                        Forces the investment calculator to process immediately by setting all active investment 'nextPayout' timestamps to the past.
-                     </p>
-                     <button 
-                        onClick={debugTriggerProfit}
-                        className="w-full py-4 bg-blue-600 hover:bg-blue-700 rounded-2xl font-bold text-sm transition-all shadow-xl shadow-blue-900/20 flex items-center justify-center gap-2"
-                     >
-                        Force Global Profit Cycle
-                     </button>
-                  </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                <div className="bg-[#0e121a] p-8 md:p-10 rounded-[32px] md:rounded-[48px] border border-blue-500/20 space-y-6">
+                   <div className="flex items-center gap-4">
+                      <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500"><RefreshCw className="w-6 h-6 md:w-8 md:h-8" /></div>
+                      <h4 className="font-black text-xl md:text-2xl">Time Warp</h4>
+                   </div>
+                   <p className="text-[10px] md:text-sm text-gray-500 leading-relaxed">Trigger immediate profit payouts for all active contracts.</p>
+                   <button onClick={debugTriggerProfit} className="w-full py-4 bg-blue-600 hover:bg-blue-700 rounded-2xl font-black text-xs md:text-lg transition-all shadow-lg flex items-center justify-center gap-3">Force Cycle</button>
+                </div>
 
-                  <div className="bg-[#141922] p-8 rounded-[40px] border border-amber-500/20 space-y-6">
-                     <div className="flex items-center gap-3 mb-2">
-                        <ShieldAlert className="w-6 h-6 text-amber-500" />
-                        <h4 className="font-bold text-lg">System Audit</h4>
-                     </div>
-                     <p className="text-sm text-gray-500 leading-relaxed">
-                        Current Memory state contains <b>{transactions.length}</b> records and <b>{investments.length}</b> active contracts.
-                     </p>
-                     <button 
-                        onClick={() => {
-                          localStorage.clear();
-                          window.location.reload();
-                        }}
-                        className="w-full py-4 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/20 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2"
-                     >
-                        Nuke Storage (Reset Platform)
-                     </button>
-                  </div>
-               </div>
-            </div>
-          )}
-        </div>
+                <div className="bg-[#0e121a] p-8 md:p-10 rounded-[32px] md:rounded-[48px] border border-red-500/20 space-y-6">
+                   <div className="flex items-center gap-4">
+                      <div className="p-3 bg-red-500/10 rounded-2xl text-red-500"><BarChart3 className="w-6 h-6 md:w-8 md:h-8" /></div>
+                      <h4 className="font-black text-xl md:text-2xl">Purge Data</h4>
+                   </div>
+                   <p className="text-[10px] md:text-sm text-gray-500 leading-relaxed">Wipe all users, logs and assets from local storage.</p>
+                   <button onClick={() => { if(confirm("Nuke data?")) { localStorage.clear(); window.location.reload(); } }} className="w-full py-4 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/20 rounded-2xl font-black text-xs md:text-lg transition-all">Nuclear Reset</button>
+                </div>
+             </div>
+          </div>
+        )}
       </div>
 
-      {/* Plan Modal Overlay */}
+      {/* Responsive Plan Modal */}
       {isPlanModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-xl bg-black/60">
-          <div className="bg-[#0e121a] border border-gray-800 w-full max-w-xl rounded-[48px] shadow-2xl overflow-hidden animate-in zoom-in slide-in-from-bottom-4 duration-300">
-            <div className="p-10 border-b border-gray-800 flex justify-between items-center bg-[#141922]/50">
-              <h3 className="text-3xl font-bold">{editingPlan ? 'Edit Package' : 'New Strategic Asset'}</h3>
-              <button onClick={() => setIsPlanModalOpen(false)} className="text-gray-500 hover:text-white bg-white/5 p-2 rounded-xl transition-all"><X /></button>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-6 backdrop-blur-2xl bg-black/60">
+          <div className="bg-[#0e121a] border border-white/10 w-full max-w-2xl rounded-[32px] md:rounded-[64px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+            <div className="p-6 md:p-12 border-b border-white/5 flex justify-between items-center bg-[#141922]/50">
+              <h3 className="text-2xl md:text-4xl font-black">{editingPlan ? 'Refactor' : 'New Plan'}</h3>
+              <button onClick={() => setIsPlanModalOpen(false)} className="text-gray-500 hover:text-white bg-white/5 p-3 rounded-xl"><X className="w-5 h-5" /></button>
             </div>
-            <form onSubmit={handleSavePlan} className="p-10 space-y-8">
+            <form onSubmit={handleSavePlan} className="p-6 md:p-12 space-y-6 md:space-y-10 overflow-y-auto custom-scrollbar">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Asset Nomenclature</label>
-                <input required name="name" defaultValue={editingPlan?.name} className="w-full bg-[#141922] border border-gray-800 rounded-[20px] px-6 py-4 outline-none focus:border-blue-500 transition-all font-bold" placeholder="e.g. Ethereum Gold Plus" />
+                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Plan Name</label>
+                <input required name="name" defaultValue={editingPlan?.name} className="w-full bg-[#141922] border border-white/5 rounded-2xl px-5 md:px-8 py-4 md:py-5 outline-none focus:border-blue-500 text-white font-bold" />
               </div>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4 md:gap-8">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Target Daily ROI (%)</label>
-                  <input required type="number" step="0.1" name="roi" defaultValue={editingPlan?.roi} className="w-full bg-[#141922] border border-gray-800 rounded-[20px] px-6 py-4 outline-none focus:border-blue-500 transition-all font-mono" />
+                  <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Yield (%)</label>
+                  <input required type="number" step="0.1" name="roi" defaultValue={editingPlan?.roi} className="w-full bg-[#141922] border border-white/5 rounded-2xl px-5 md:px-8 py-4 md:py-5 outline-none focus:border-blue-500 text-blue-500 font-mono font-black" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Lifecycle (Days)</label>
-                  <input required type="number" name="durationDays" defaultValue={editingPlan?.durationDays} className="w-full bg-[#141922] border border-gray-800 rounded-[20px] px-6 py-4 outline-none focus:border-blue-500 transition-all font-mono" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Minimum Stake ($)</label>
-                  <input required type="number" name="minAmount" defaultValue={editingPlan?.minAmount} className="w-full bg-[#141922] border border-gray-800 rounded-[20px] px-6 py-4 outline-none focus:border-blue-500 transition-all font-mono" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Maximum Stake ($)</label>
-                  <input required type="number" name="maxAmount" defaultValue={editingPlan?.maxAmount} className="w-full bg-[#141922] border border-gray-800 rounded-[20px] px-6 py-4 outline-none focus:border-blue-500 transition-all font-mono" />
+                  <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Days</label>
+                  <input required type="number" name="durationDays" defaultValue={editingPlan?.durationDays} className="w-full bg-[#141922] border border-white/5 rounded-2xl px-5 md:px-8 py-4 md:py-5 outline-none focus:border-blue-500 text-white font-mono font-black" />
                 </div>
               </div>
-              <button type="submit" className="w-full py-6 bg-blue-600 hover:bg-blue-700 rounded-[24px] font-bold text-lg shadow-2xl shadow-blue-900/50 transition-all flex items-center justify-center gap-3">
-                <Save className="w-6 h-6" /> Deploy Configuration
+              <div className="grid grid-cols-2 gap-4 md:gap-8">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Min ($)</label>
+                  <input required type="number" name="minAmount" defaultValue={editingPlan?.minAmount} className="w-full bg-[#141922] border border-white/5 rounded-2xl px-5 md:px-8 py-4 md:py-5 outline-none focus:border-blue-500 text-emerald-500 font-mono font-black" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Max ($)</label>
+                  <input required type="number" name="maxAmount" defaultValue={editingPlan?.maxAmount} className="w-full bg-[#141922] border border-white/5 rounded-2xl px-5 md:px-8 py-4 md:py-5 outline-none focus:border-blue-500 text-emerald-500 font-mono font-black" />
+                </div>
+              </div>
+              <button type="submit" className="w-full py-5 md:py-7 bg-blue-600 hover:bg-blue-700 rounded-2xl md:rounded-[32px] font-black text-sm md:text-xl shadow-xl flex items-center justify-center gap-3">
+                <Save className="w-5 h-5 md:w-7 md:h-7" /> Save Asset
               </button>
             </form>
           </div>
