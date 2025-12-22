@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
-import { LayoutDashboard, Wallet, History, Users, Settings, LogOut, Menu, X, ShieldCheck, TrendingUp, LogOut as LogOutIcon, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { LayoutDashboard, Wallet, Users, ShieldCheck, TrendingUp, LogOut as LogOutIcon, Menu, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { UserRole } from '../types';
 
@@ -15,7 +15,6 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
   const isAdmin = currentUser.role === UserRole.ADMIN;
 
-  // Filter navigation: Admins shouldn't "Invest" or manage "Referrals" for themselves
   const navigation = [
     { name: 'Overview', icon: LayoutDashboard, path: isAdmin ? '/admin' : '/dashboard' },
     ...(!isAdmin ? [
@@ -87,7 +86,6 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                     {item.name}
                   </span>
                   
-                  {/* Tooltip for collapsed state */}
                   {isCollapsed && (
                     <div className="absolute left-full ml-2 px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap hidden md:block">
                       {item.name}
@@ -99,7 +97,6 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           </nav>
         </div>
 
-        {/* Sidebar Footer */}
         <div className={`mt-auto p-6 border-t border-gray-800 mb-24 md:mb-0 hidden md:block ${isCollapsed ? 'md:px-4' : ''}`}>
            <div className={`flex items-center gap-3 px-4 py-2 bg-blue-600/5 rounded-2xl border border-white/5 overflow-hidden transition-all duration-300 ${isCollapsed ? 'md:px-2 md:justify-center' : ''}`}>
               <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0 overflow-hidden">
@@ -119,7 +116,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
       {/* Main Content Area */}
       <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
-        {/* Header */}
+        {/* Simplified Header */}
         <header className="h-20 bg-[#0e121a]/80 backdrop-blur-lg sticky top-0 border-b border-gray-800 px-6 flex items-center justify-between z-30">
           <div className="flex items-center gap-4">
             {/* Mobile Hamburger (Drawer) */}
@@ -137,40 +134,26 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
             >
               <Menu className="w-5 h-5" />
             </button>
-
-            <div className="flex flex-col">
-              <h1 className="text-lg font-semibold text-white">Welcome, {currentUser.name}</h1>
-              <p className="text-sm text-gray-500 hidden sm:block">Track your portfolio performance</p>
-            </div>
-            
-            {/* Mobile Logo in Header */}
-            <Link to="/" className="md:hidden">
-               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">C</div>
-            </Link>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-6">
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Balance</span>
-              <span className="text-sm md:text-lg font-bold text-green-500 font-mono">${currentUser.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          <div className="flex items-center gap-3 md:gap-4">
+            {/* Avatar */}
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-sm border-2 border-white/5 shadow-lg flex-shrink-0 overflow-hidden">
+              {currentUser.avatar ? (
+                <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+              ) : (
+                currentUser.name[0]
+              )}
             </div>
-            
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={logout}
-                className="p-2.5 text-gray-500 hover:text-red-500 bg-white/5 hover:bg-red-500/10 rounded-xl transition-all border border-white/5 group"
-                title="Sign Out"
-              >
-                <LogOutIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <div className="hidden sm:flex w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center font-bold text-sm border-2 border-white/5 shadow-lg flex-shrink-0 overflow-hidden">
-                {currentUser.avatar ? (
-                  <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
-                ) : (
-                  currentUser.name[0]
-                )}
-              </div>
-            </div>
+
+            {/* Logout Button moved after Avatar */}
+            <button 
+              onClick={logout}
+              className="p-2.5 text-gray-500 hover:text-red-500 bg-white/5 hover:bg-red-500/10 rounded-xl transition-all border border-white/5 group"
+              title="Sign Out"
+            >
+              <LogOutIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            </button>
           </div>
         </header>
 
