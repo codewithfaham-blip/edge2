@@ -116,7 +116,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
       {/* Main Content Area */}
       <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
-        {/* Simplified Header */}
+        {/* Full Header */}
         <header className="h-20 bg-[#0e121a]/80 backdrop-blur-lg sticky top-0 border-b border-gray-800 px-6 flex items-center justify-between z-30">
           <div className="flex items-center gap-4">
             {/* Mobile Hamburger (Drawer) */}
@@ -134,9 +134,28 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
             >
               <Menu className="w-5 h-5" />
             </button>
+
+            <div className="hidden sm:block">
+               <h2 className="text-sm font-bold text-white truncate max-w-[150px] md:max-w-none">Welcome, {currentUser.name}</h2>
+               <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">{currentUser.role} Account</p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-3 md:gap-6">
+            <div className="hidden md:flex flex-col items-end mr-4">
+               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Balance</span>
+               <span className="text-sm font-black text-emerald-500 font-mono">${currentUser.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            {/* Logout Button */}
+            <button 
+              onClick={logout}
+              className="p-2.5 text-gray-500 hover:text-red-500 bg-white/5 hover:bg-red-500/10 rounded-xl transition-all border border-white/5 group order-last md:order-none"
+              title="Sign Out"
+            >
+              <LogOutIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            </button>
+
             {/* Avatar */}
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-sm border-2 border-white/5 shadow-lg flex-shrink-0 overflow-hidden">
               {currentUser.avatar ? (
@@ -145,15 +164,6 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                 currentUser.name[0]
               )}
             </div>
-
-            {/* Logout Button moved after Avatar */}
-            <button 
-              onClick={logout}
-              className="p-2.5 text-gray-500 hover:text-red-500 bg-white/5 hover:bg-red-500/10 rounded-xl transition-all border border-white/5 group"
-              title="Sign Out"
-            >
-              <LogOutIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            </button>
           </div>
         </header>
 
