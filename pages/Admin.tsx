@@ -37,14 +37,6 @@ export const AdminPanel = () => {
 
   const pendingWithdrawals = transactions.filter(t => t.type === TransactionType.WITHDRAWAL && t.status === TransactionStatus.PENDING);
 
-  const tabs = [
-    { id: 'overview', label: 'Summary', icon: LayoutGrid },
-    { id: 'withdrawals', label: 'Payouts', icon: CreditCard, badge: pendingWithdrawals.length },
-    { id: 'users', label: 'Members', icon: UsersIcon },
-    { id: 'plans', label: 'Engine', icon: Layers },
-    { id: 'system', label: 'Kernel', icon: Settings },
-  ];
-
   const handleOpenPlanModal = (plan?: InvestmentPlan) => {
     setEditingPlan(plan || null);
     setIsPlanModalOpen(true);
@@ -81,14 +73,14 @@ export const AdminPanel = () => {
   };
 
   return (
-    <div className="space-y-6 md:space-y-10 animate-in fade-in duration-500 pb-24 md:pb-10">
+    <div className="space-y-6 md:space-y-10 animate-in fade-in duration-500">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="min-w-0">
           <h2 className="text-xl sm:text-2xl md:text-4xl font-black text-white flex items-center gap-2 md:gap-3 tracking-tighter truncate">
             <ShieldAlert className="text-blue-500 w-6 h-6 sm:w-8 md:w-10 md:h-10 shrink-0" /> Command Center
           </h2>
-          <p className="text-gray-500 text-[10px] sm:text-xs md:text-base font-medium mt-0.5">Real-time platform oversight & control.</p>
+          <p className="text-gray-500 text-[10px] sm:text-xs md:text-base font-medium mt-0.5 uppercase tracking-widest">Platform Status: <span className="text-emerald-500 font-bold">Optimized</span></p>
         </div>
         
         <div className="flex items-center gap-2 shrink-0">
@@ -103,36 +95,6 @@ export const AdminPanel = () => {
              <span className="text-[8px] sm:text-[10px] md:text-xs font-black text-blue-500 uppercase tracking-widest">Online</span>
            </div>
         </div>
-      </div>
-
-      {/* Navigation - Standard Responsive Pill Bar */}
-      <div className="sticky top-20 z-40 -mx-6 px-6 md:mx-0 md:px-0">
-        <div className="bg-[#0e121a]/80 backdrop-blur-2xl border-y md:border border-gray-800 md:rounded-[24px] overflow-x-auto no-scrollbar py-2 md:p-2 shadow-2xl scroll-smooth">
-          <div className="flex items-center gap-1 md:gap-2 min-w-max px-4 md:px-0">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 md:gap-4 px-4 md:px-8 py-2.5 md:py-4 rounded-xl md:rounded-2xl font-black transition-all whitespace-nowrap group relative ${
-                  activeTab === tab.id 
-                  ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]' 
-                  : 'text-gray-500 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <tab.icon className={`w-3.5 h-3.5 md:w-5 md:h-5 ${activeTab === tab.id ? 'scale-110' : ''}`} />
-                <span className="text-[10px] md:text-sm uppercase tracking-[0.15em] font-black">{tab.label}</span>
-                {tab.badge ? (
-                  <span className={`text-[8px] md:text-[10px] px-1.5 py-0.5 rounded-lg font-black leading-none ${
-                    activeTab === tab.id ? 'bg-white text-blue-600' : 'bg-red-500 text-white animate-pulse'
-                  }`}>
-                    {tab.badge}
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#0b0e14] to-transparent pointer-events-none md:hidden" />
       </div>
 
       {/* Main Tab Content */}
@@ -306,7 +268,7 @@ export const AdminPanel = () => {
         )}
       </div>
 
-      {/* History Modal */}
+      {/* Modal windows remain unchanged as they are floating layers */}
       {isHistoryModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8 backdrop-blur-2xl bg-black/70 animate-in fade-in duration-300">
           <div className="bg-[#0e121a] border border-white/10 w-full max-w-5xl rounded-3xl md:rounded-[48px] shadow-3xl overflow-hidden flex flex-col max-h-[90vh]">
