@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
-import { LayoutDashboard, Wallet, History, Users, Settings, LogOut, Menu, X, ShieldCheck, TrendingUp, LogOut as LogOutIcon } from 'lucide-react';
+import { LayoutDashboard, Wallet, History, Users, Settings, LogOut, Menu, X, ShieldCheck, TrendingUp, LogOut as LogOutIcon, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { UserRole } from '../types';
 
 export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, logout } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
 
   if (!currentUser) return null;
@@ -43,38 +44,60 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         />
       )}
 
-      {/* Sidebar (Desktop) */}
-      <div className={`fixed inset-y-0 left-0 w-64 bg-[#0e121a] border-r border-gray-800 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-200 z-50 flex flex-col`}>
-        <div className="p-6">
-          <Link to="/" className="flex items-center gap-2 mb-10">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-900/40 text-white">C</div>
-            {/* Brand text removed as per request */}
-          </Link>
+      {/* Sidebar (Desktop & Mobile) */}
+      <div 
+        className={`fixed inset-y-0 left-0 bg-[#0e121a] border-r border-gray-800 transform ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0 transition-all duration-300 z-50 flex flex-col ${
+          isCollapsed ? 'md:w-20' : 'md:w-64'
+        } w-64`}
+      >
+        <div className={`p-6 ${isCollapsed ? 'md:px-4' : ''}`}>
+          <div className="flex items-center justify-between mb-10">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-900/40 text-white flex-shrink-0">C</div>
+            </Link>
+          </div>
 
           <nav className="space-y-1">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.path}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  isActive(item.path) 
-                  ? 'bg-blue-600/10 text-blue-500 border border-blue-600/20' 
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium">{item.name}</span>
-              </Link>
-            ))}
+            {navigation.map((item) => {
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative ${
+                    active 
+                    ? 'bg-blue-600/10 text-blue-500 border border-blue-600/20' 
+                    : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                  } ${isCollapsed ? 'md:justify-center md:px-0' : ''}`}
+                  title={isCollapsed ? item.name : ''}
+                >
+                  <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-blue-500' : 'text-gray-400 group-hover:text-white'}`} />
+                  <span className={`font-medium transition-all duration-300 whitespace-nowrap overflow-hidden ${
+                    isCollapsed ? 'md:w-0 md:opacity-0' : 'w-auto opacity-100'
+                  }`}>
+                    {item.name}
+                  </span>
+                  
+                  {/* Tooltip for collapsed state */}
+                  {isCollapsed && (
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap hidden md:block">
+                      {item.name}
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
-        {/* Sidebar Footer - Logout button hidden from here as requested */}
-        <div className="mt-auto p-6 border-t border-gray-800 mb-24 md:mb-0 hidden md:block">
-           <div className="flex items-center gap-3 px-4 py-2 bg-blue-600/5 rounded-2xl border border-white/5">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs">{currentUser.name[0]}</div>
-              <div className="flex flex-col overflow-hidden">
+        {/* Sidebar Footer */}
+        <div className={`mt-auto p-6 border-t border-gray-800 mb-24 md:mb-0 hidden md:block ${isCollapsed ? 'md:px-4' : ''}`}>
+           <div className={`flex items-center gap-3 px-4 py-2 bg-blue-600/5 rounded-2xl border border-white/5 overflow-hidden transition-all duration-300 ${isCollapsed ? 'md:px-2 md:justify-center' : ''}`}>
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0">{currentUser.name[0]}</div>
+              <div className={`flex flex-col overflow-hidden transition-all duration-300 ${isCollapsed ? 'md:w-0 md:opacity-0' : 'w-auto opacity-100'}`}>
                  <span className="text-sm font-bold text-white truncate">{currentUser.name}</span>
                  <span className="text-[10px] text-gray-500 truncate uppercase tracking-tighter">{currentUser.role}</span>
               </div>
@@ -83,20 +106,31 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 md:ml-64">
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
         {/* Header */}
         <header className="h-20 bg-[#0e121a]/80 backdrop-blur-lg sticky top-0 border-b border-gray-800 px-6 flex items-center justify-between z-30">
           <div className="flex items-center gap-4">
+            {/* Mobile Hamburger (Drawer) */}
             <button 
               className="md:hidden text-gray-400"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="hidden md:flex flex-col">
+            
+            {/* Desktop Hamburger (Collapse) */}
+            <button 
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="hidden md:flex p-2 text-gray-500 hover:text-white bg-white/5 rounded-lg transition-colors mr-2"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <div className="flex flex-col">
               <h1 className="text-lg font-semibold text-white">Welcome, {currentUser.name}</h1>
-              <p className="text-sm text-gray-500">Track your portfolio performance</p>
+              <p className="text-sm text-gray-500 hidden sm:block">Track your portfolio performance</p>
             </div>
+            
             {/* Mobile Logo in Header */}
             <Link to="/" className="md:hidden">
                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">C</div>
@@ -109,7 +143,6 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
               <span className="text-sm md:text-lg font-bold text-green-500 font-mono">${currentUser.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
             
-            {/* Unified Action Bar Header for both mobile and desktop */}
             <div className="flex items-center gap-2">
               <button 
                 onClick={logout}
@@ -118,7 +151,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
               >
                 <LogOutIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </button>
-              <div className="hidden sm:flex w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center font-bold text-sm border-2 border-white/5 shadow-lg">
+              <div className="hidden sm:flex w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center font-bold text-sm border-2 border-white/5 shadow-lg flex-shrink-0">
                 {currentUser.name[0]}
               </div>
             </div>
@@ -132,7 +165,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-4">
-        <div className="bg-[#0e121a]/95 backdrop-blur-3xl border border-white/10 rounded-[32px] h-20 flex items-center justify-around px-2 shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.8)]">
+        <div className="bg-[#0e121a]/95 backdrop-blur-3xl border border-white/10 rounded-[32px] h-20 flex items-center justify-around px-2 shadow-[0_-20_50px_-12px_rgba(0,0,0,0.8)]">
           {mobileNav.map((item) => {
             const active = isActive(item.path);
             return (
