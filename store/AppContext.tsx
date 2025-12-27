@@ -1,7 +1,13 @@
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { User, InvestmentPlan, Investment, Transaction, UserRole, TransactionType, TransactionStatus, SupportTicket } from '../types.ts';
+import { INITIAL_PLANS, MOCK_USERS } from '../constants.ts';
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { User, InvestmentPlan, Investment, Transaction, UserRole, TransactionType, TransactionStatus } from '../types';
-import { INITIAL_PLANS, MOCK_USERS } from '../constants';
+export interface Toast {
+  id: string;
+  message: string;
+  type: 'success' | 'info' | 'error';
+  title?: string;
+}
 
 interface PlatformStats {
   totalUsers: number;
@@ -9,7 +15,16 @@ interface PlatformStats {
   totalWithdrawals: number;
   totalInvested: number;
   pendingWithdrawals: number;
+  pendingDeposits: number;
   platformBalance: number;
+}
+
+interface SystemIntegration {
+  isLive: boolean;
+  dbLink: string;
+  authRpc: string;
+  apiGateway: string;
+  lastSync: number | null;
 }
 
 interface AppContextType {
@@ -18,189 +33,230 @@ interface AppContextType {
   plans: InvestmentPlan[];
   investments: Investment[];
   transactions: Transaction[];
+  tickets: SupportTicket[];
   platformStats: PlatformStats;
+  theme: 'dark' | 'light';
+  toasts: Toast[];
+  systemIntegration: SystemIntegration;
+  isHydrated: boolean;
+  toggleTheme: () => void;
+  removeToast: (id: string) => void;
+  addToast: (message: string, type?: 'success' | 'info' | 'error', title?: string) => void;
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
+  updateProfile: (data: Partial<User>) => void;
+  createTicket: (subject: string, message: string, priority: 'LOW' | 'MEDIUM' | 'HIGH') => void;
   register: (name: string, email: string, userId: string, referrerCode?: string) => Promise<{success: boolean, message?: string}>;
   makeDeposit: (amount: number, method: string) => void;
   requestWithdrawal: (amount: number, method: string) => void;
   investInPlan: (planId: string, amount: number) => string | null;
   adminApproveWithdrawal: (txId: string) => void;
   adminRejectWithdrawal: (txId: string) => void;
+  adminApproveDeposit: (txId: string) => void;
+  adminRejectDeposit: (txId: string) => void;
   adminUpdateUser: (userId: string, data: Partial<User>) => void;
   adminUpdatePlan: (plan: InvestmentPlan) => void;
   adminDeletePlan: (id: string) => void;
   adminCreatePlan: (plan: Omit<InvestmentPlan, 'id'>) => void;
   debugTriggerProfit: () => void;
+  updateSystemIntegration: (config: Partial<SystemIntegration>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+const SIMULATED_DAY_MS = 60000;
 
-const SIMULATED_DAY_MS = 60000; // 1 minute = 1 day in simulator
+const safeParse = <T,>(key: string, fallback: T): T => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : fallback;
+  } catch (e) {
+    return fallback;
+  }
+};
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('hyip_current_user');
-    return saved ? JSON.parse(saved) : null;
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [systemIntegration, setSystemIntegration] = useState<SystemIntegration>({
+    isLive: false, dbLink: '', authRpc: '', apiGateway: '', lastSync: null
   });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [plans, setPlans] = useState<InvestmentPlan[]>([]);
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('hyip_users');
-    return saved ? JSON.parse(saved) : MOCK_USERS;
-  });
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('hyip_theme') as 'dark' | 'light';
+    if (savedTheme) setTheme(savedTheme);
 
-  const [plans, setPlans] = useState<InvestmentPlan[]>(() => {
-    const saved = localStorage.getItem('hyip_plans');
-    return saved ? JSON.parse(saved) : INITIAL_PLANS;
-  });
+    setSystemIntegration(safeParse('hyip_system_integration', { isLive: false, dbLink: '', authRpc: '', apiGateway: '', lastSync: null }));
+    setCurrentUser(safeParse('hyip_current_user', null));
+    setUsers(safeParse('hyip_users', MOCK_USERS));
+    setTickets(safeParse('hyip_tickets', []));
+    setPlans(safeParse('hyip_plans', INITIAL_PLANS));
+    setInvestments(safeParse('hyip_investments', []));
+    setTransactions(safeParse('hyip_transactions', []));
 
-  const [investments, setInvestments] = useState<Investment[]>(() => {
-    const saved = localStorage.getItem('hyip_investments');
-    return saved ? JSON.parse(saved) : [];
-  });
+    setIsHydrated(true);
+  }, []);
 
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem('hyip_transactions');
-    return saved ? JSON.parse(saved) : [];
-  });
+  useEffect(() => {
+    if (!isHydrated) return;
+    const root = window.document.documentElement;
+    if (theme === 'dark') root.classList.add('dark');
+    else root.classList.remove('dark');
+    localStorage.setItem('hyip_theme', theme);
+  }, [theme, isHydrated]);
+
+  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+
+  const addToast = useCallback((message: string, type: 'success' | 'info' | 'error' = 'info', title?: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setToasts(prev => [...prev, { id, message, type, title }]);
+    setTimeout(() => removeToast(id), 5000);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
 
   const platformStats = useMemo(() => {
-    const stats: PlatformStats = {
+    return {
       totalUsers: users.length,
       totalDeposits: transactions.filter(t => t.type === TransactionType.DEPOSIT && t.status === TransactionStatus.COMPLETED).reduce((a, b) => a + b.amount, 0),
       totalWithdrawals: transactions.filter(t => t.type === TransactionType.WITHDRAWAL && t.status === TransactionStatus.COMPLETED).reduce((a, b) => a + b.amount, 0),
       totalInvested: investments.reduce((a, b) => a + b.amount, 0),
       pendingWithdrawals: transactions.filter(t => t.type === TransactionType.WITHDRAWAL && t.status === TransactionStatus.PENDING).length,
+      pendingDeposits: transactions.filter(t => t.type === TransactionType.DEPOSIT && t.status === TransactionStatus.PENDING).length,
       platformBalance: users.reduce((a, b) => a + b.balance, 0),
     };
-    return stats;
   }, [users, transactions, investments]);
 
   useEffect(() => {
+    if (!isHydrated) return;
     localStorage.setItem('hyip_current_user', JSON.stringify(currentUser));
     localStorage.setItem('hyip_users', JSON.stringify(users));
     localStorage.setItem('hyip_plans', JSON.stringify(plans));
     localStorage.setItem('hyip_investments', JSON.stringify(investments));
     localStorage.setItem('hyip_transactions', JSON.stringify(transactions));
-  }, [currentUser, users, plans, investments, transactions]);
+    localStorage.setItem('hyip_tickets', JSON.stringify(tickets));
+    localStorage.setItem('hyip_system_integration', JSON.stringify(systemIntegration));
+  }, [currentUser, users, plans, investments, transactions, tickets, systemIntegration, isHydrated]);
 
-  useEffect(() => {
-    if (currentUser) {
-      const liveUser = users.find(u => u.id === currentUser.id);
-      if (liveUser && (liveUser.balance !== currentUser.balance || liveUser.isBlocked !== currentUser.isBlocked)) {
-        setCurrentUser(liveUser);
-      }
-    }
-  }, [users]);
+  const processProfits = useCallback(() => {
+    const now = Date.now();
+    let hasChanges = false;
+    const newTransactions: Transaction[] = [];
+    const userUpdates: Record<string, number> = {};
+    let totalCurrentUserProfit = 0;
 
-  const processProfits = () => {
-    setInvestments(prevInvestments => {
-      let hasChanges = false;
-      const newTransactions: Transaction[] = [];
-      const userUpdates: Record<string, number> = {};
+    const nextInvestments = investments.map(inv => {
+      if (inv.status !== 'ACTIVE') return inv;
+      const plan = plans.find(p => p.id === inv.planId);
+      if (!plan) return inv;
 
-      const nextInvestments = prevInvestments.map(inv => {
-        if (inv.status !== 'ACTIVE') return inv;
+      let tempInv = { ...inv };
+      let updated = false;
 
-        const plan = plans.find(p => p.id === inv.planId);
-        if (!plan) return inv;
-
-        let tempInv = { ...inv };
-        let processedAny = false;
-
-        while (Date.now() > tempInv.nextPayout && tempInv.totalPayouts < plan.durationDays) {
-          hasChanges = true;
-          processedAny = true;
-          const profit = tempInv.amount * (plan.roi / 100);
-          
-          userUpdates[tempInv.userId] = (userUpdates[tempInv.userId] || 0) + profit;
-          
-          newTransactions.push({
-            id: Math.random().toString(36).substr(2, 9),
-            userId: tempInv.userId,
-            amount: profit,
-            type: TransactionType.PROFIT,
-            status: TransactionStatus.COMPLETED,
-            date: Date.now(),
-            details: `Yield payout from ${plan.name} (${tempInv.totalPayouts + 1}/${plan.durationDays})`
-          });
-
-          tempInv.totalPayouts += 1;
-          tempInv.earnedSoFar += profit;
-          tempInv.nextPayout += SIMULATED_DAY_MS;
-
-          if (tempInv.totalPayouts >= plan.durationDays) {
-            tempInv.status = 'COMPLETED';
-            break;
-          }
+      while (now > tempInv.nextPayout && tempInv.totalPayouts < plan.durationDays) {
+        hasChanges = true;
+        updated = true;
+        const profit = tempInv.amount * (plan.roi / 100);
+        
+        userUpdates[tempInv.userId] = (userUpdates[tempInv.userId] || 0) + profit;
+        
+        if (tempInv.userId === currentUser?.id) {
+          totalCurrentUserProfit += profit;
         }
 
-        return processedAny ? tempInv : inv;
-      });
+        newTransactions.push({
+          id: Math.random().toString(36).substr(2, 9),
+          userId: tempInv.userId,
+          amount: profit,
+          type: TransactionType.PROFIT,
+          status: TransactionStatus.COMPLETED,
+          date: now,
+          details: `Yield payout from ${plan.name}`
+        });
 
-      if (hasChanges) {
-        setUsers(prevUsers => prevUsers.map(u => {
-          if (userUpdates[u.id]) {
-            return { ...u, balance: u.balance + userUpdates[u.id] };
-          }
-          return u;
-        }));
-        setTransactions(prevT => [...newTransactions, ...prevT]);
-        return nextInvestments;
+        tempInv.totalPayouts += 1;
+        tempInv.earnedSoFar += profit;
+        tempInv.nextPayout += SIMULATED_DAY_MS;
+
+        if (tempInv.totalPayouts >= plan.durationDays) {
+          tempInv.status = 'COMPLETED';
+          break;
+        }
       }
-
-      return prevInvestments;
+      return updated ? tempInv : inv;
     });
-  };
 
-  useEffect(() => {
-    const interval = setInterval(processProfits, 5000); // Check every 5s for smoother ROI tracking
-    return () => clearInterval(interval);
-  }, [plans]);
-
-  const login = async (email: string, pass: string): Promise<boolean> => {
-    if (email === 'admin@hyip.com' && pass === 'admin123') {
-      const admin = users.find(u => u.email === email);
-      if (admin) {
-        setCurrentUser(admin);
-        return true;
+    if (hasChanges) {
+      setInvestments(nextInvestments);
+      setTransactions(prev => [...newTransactions, ...prev]);
+      setUsers(prev => prev.map(u => userUpdates[u.id] ? { ...u, balance: u.balance + userUpdates[u.id] } : u));
+      
+      if (currentUser && userUpdates[currentUser.id]) {
+        setCurrentUser(prev => prev ? { ...prev, balance: prev.balance + userUpdates[prev.id!] } : null);
+        addToast(`ROI payout of $${totalCurrentUserProfit.toFixed(2)} received.`, 'success', 'Yield Credit');
       }
     }
+  }, [investments, plans, currentUser, addToast]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    const interval = setInterval(processProfits, 5000);
+    return () => clearInterval(interval);
+  }, [isHydrated, processProfits]);
+
+  const login = async (email: string, pass: string) => {
     const user = users.find(u => u.email === email && !u.isBlocked);
-    if (user) {
+    if (user && (email === 'admin@hyip.com' ? pass === 'admin123' : true)) {
       setCurrentUser(user);
       return true;
     }
     return false;
   };
 
-  const logout = () => {
-    setCurrentUser(null);
+  const logout = () => setCurrentUser(null);
+
+  const updateProfile = (data: Partial<User>) => {
+    if (!currentUser) return;
+    const updated = { ...currentUser, ...data };
+    setCurrentUser(updated);
+    setUsers(prev => prev.map(u => u.id === currentUser.id ? updated : u));
+    addToast('Security profile updated.', 'success', 'System Confirmed');
   };
 
-  const register = async (name: string, email: string, userId: string, referrerCode?: string): Promise<{success: boolean, message?: string}> => {
-    if (users.find(u => u.email === email)) return { success: false, message: 'Email already registered' };
-    const normalizedUserId = userId.trim().toUpperCase().replace(/\s/g, '');
-    if (users.find(u => u.referralCode === normalizedUserId)) return { success: false, message: 'User ID / Referral code is taken' };
+  const createTicket = (subject: string, message: string, priority: 'LOW' | 'MEDIUM' | 'HIGH') => {
+    if (!currentUser) return;
+    const newTicket: SupportTicket = {
+      id: Math.random().toString(36).substr(2, 9),
+      userId: currentUser.id,
+      subject,
+      message,
+      status: 'OPEN',
+      priority,
+      createdAt: Date.now()
+    };
+    setTickets(prev => [newTicket, ...prev]);
+    addToast('Support ticket logged.', 'info', 'Inquiry Active');
+  };
 
-    let referredBy: string | undefined = undefined;
-    if (referrerCode) {
-      const referrer = users.find(u => u.referralCode === referrerCode.trim().toUpperCase());
-      if (referrer) referredBy = referrer.id;
-    }
+  const register = async (name: string, email: string, userId: string, referrerCode?: string) => {
+    const norm = userId.trim().toUpperCase();
+    if (users.find(u => u.email === email || u.referralCode === norm)) return { success: false, message: 'Identity Conflict' };
 
     const newUser: User = {
       id: Math.random().toString(36).substr(2, 9),
-      email,
-      name,
-      role: UserRole.USER,
-      balance: 1000, 
-      totalInvested: 0,
-      totalWithdrawn: 0,
-      referralCode: normalizedUserId,
-      referredBy,
-      createdAt: Date.now(),
-      isBlocked: false,
+      email, name, role: UserRole.USER, balance: 5, 
+      totalInvested: 0, totalWithdrawn: 0, referralCode: norm,
+      createdAt: Date.now(), isBlocked: false,
+      kycLevel: 0, twoFactorEnabled: false,
+      referredBy: referrerCode ? users.find(u => u.referralCode === referrerCode.trim().toUpperCase())?.id : undefined
     };
     setUsers([...users, newUser]);
     setCurrentUser(newUser);
@@ -209,98 +265,60 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const makeDeposit = (amount: number, method: string) => {
     if (!currentUser) return;
-    const tx: Transaction = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId: currentUser.id,
-      amount,
-      type: TransactionType.DEPOSIT,
-      status: TransactionStatus.COMPLETED,
-      date: Date.now(),
-      method,
-    };
+    const isInstant = !['Bank Transfer', 'Credit Card'].includes(method);
+    const status = isInstant ? TransactionStatus.COMPLETED : TransactionStatus.PENDING;
+    const tx: Transaction = { id: Math.random().toString(36).substr(2, 9), userId: currentUser.id, amount, type: TransactionType.DEPOSIT, status, date: Date.now(), method };
     setTransactions(prev => [tx, ...prev]);
-    setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, balance: u.balance + amount } : u));
+    if (status === TransactionStatus.COMPLETED) {
+      setCurrentUser(prev => prev ? { ...prev, balance: prev.balance + amount } : null);
+      setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, balance: u.balance + amount } : u));
+      addToast(`Deposited $${amount.toLocaleString()} via ${method}.`, 'success', 'Confirmed');
+    } else {
+      addToast(`Processing $${amount.toLocaleString()} via ${method}.`, 'info', 'Pending Verification');
+    }
   };
 
   const requestWithdrawal = (amount: number, method: string) => {
     if (!currentUser || currentUser.balance < amount) return;
-    const tx: Transaction = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId: currentUser.id,
-      amount,
-      type: TransactionType.WITHDRAWAL,
-      status: TransactionStatus.PENDING,
-      date: Date.now(),
-      method,
-    };
+    const tx: Transaction = { id: Math.random().toString(36).substr(2, 9), userId: currentUser.id, amount, type: TransactionType.WITHDRAWAL, status: TransactionStatus.PENDING, date: Date.now(), method };
     setTransactions(prev => [tx, ...prev]);
+    setCurrentUser(prev => prev ? { ...prev, balance: prev.balance - amount } : null);
     setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, balance: u.balance - amount } : u));
+    addToast(`Withdrawal of $${amount.toLocaleString()} pending.`, 'info', 'Verification Step');
   };
 
   const investInPlan = (planId: string, amount: number) => {
-    const liveUser = users.find(u => u.id === currentUser?.id);
-    if (!liveUser || liveUser.balance < amount) return 'Insufficient balance';
+    const u = currentUser;
+    const p = plans.find(p => p.id === planId);
+    if (!u || u.balance < amount || !p || amount < p.minAmount || amount > p.maxAmount) return 'Invalid Parameters';
     
-    const plan = plans.find(p => p.id === planId);
-    if (!plan) return 'Plan not found';
-    if (amount < plan.minAmount || amount > plan.maxAmount) return 'Amount outside plan limits';
-
-    const newInv: Investment = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId: liveUser.id,
-      planId,
-      amount,
-      earnedSoFar: 0,
-      startDate: Date.now(),
-      nextPayout: Date.now() + SIMULATED_DAY_MS,
-      totalPayouts: 0,
-      status: 'ACTIVE'
+    const newInv: Investment = { 
+      id: Math.random().toString(36).substr(2, 9), 
+      userId: u.id, 
+      planId, 
+      amount, 
+      earnedSoFar: 0, 
+      startDate: Date.now(), 
+      nextPayout: Date.now() + SIMULATED_DAY_MS, 
+      totalPayouts: 0, 
+      status: 'ACTIVE' 
     };
 
-    if (liveUser.referredBy) {
-      const commission = amount * 0.05;
-      setUsers(prev => prev.map(u => {
-        if (u.id === liveUser.referredBy) return { ...u, balance: u.balance + commission };
-        return u;
-      }));
-      setTransactions(prev => [{
-        id: Math.random().toString(36).substr(2, 9),
-        userId: liveUser.referredBy as string,
-        amount: commission,
-        type: TransactionType.REFERRAL,
-        status: TransactionStatus.COMPLETED,
-        date: Date.now(),
-        details: `Referral commission from ${liveUser.name}'s investment`
-      }, ...prev]);
-    }
-
     setInvestments(prev => [newInv, ...prev]);
-    setUsers(prev => prev.map(u => u.id === liveUser.id ? { 
-      ...u, 
-      balance: u.balance - amount,
-      totalInvested: u.totalInvested + amount 
-    } : u));
+    setCurrentUser(prev => prev ? { ...prev, balance: prev.balance - amount, totalInvested: prev.totalInvested + amount } : null);
+    setUsers(prev => prev.map(usr => usr.id === u.id ? { ...usr, balance: usr.balance - amount, totalInvested: usr.totalInvested + amount } : usr));
     
-    setTransactions(prev => [{
-      id: Math.random().toString(36).substr(2, 9),
-      userId: liveUser.id,
-      amount,
-      type: TransactionType.DEPOSIT,
-      status: TransactionStatus.COMPLETED,
-      date: Date.now(),
-      details: `Capital allocated to ${plan.name} package`
-    }, ...prev]);
-
+    const tx: Transaction = { id: Math.random().toString(36).substr(2, 9), userId: u.id, amount, type: TransactionType.DEPOSIT, status: TransactionStatus.COMPLETED, date: Date.now(), details: `Stake: ${p.name}` };
+    setTransactions(prev => [tx, ...prev]);
+    
+    addToast(`$${amount.toLocaleString()} allocated to ${p.name}.`, 'success', 'Protocol Active');
     return null;
   };
 
   const adminApproveWithdrawal = (txId: string) => {
     setTransactions(prev => prev.map(t => {
       if (t.id === txId) {
-        setUsers(uList => uList.map(u => {
-          if (u.id === t.userId) return { ...u, totalWithdrawn: u.totalWithdrawn + t.amount };
-          return u;
-        }));
+        setUsers(uList => uList.map(u => u.id === t.userId ? { ...u, totalWithdrawn: u.totalWithdrawn + t.amount } : u));
         return { ...t, status: TransactionStatus.COMPLETED };
       }
       return t;
@@ -308,50 +326,60 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const adminRejectWithdrawal = (txId: string) => {
+    setTransactions(prev => prev.map(t => t.id === txId ? { ...t, status: TransactionStatus.REJECTED } : t));
+    const tx = transactions.find(t => t.id === txId);
+    if (tx) {
+      setUsers(prev => prev.map(u => u.id === tx.userId ? { ...u, balance: u.balance + tx.amount } : u));
+    }
+  };
+
+  const adminApproveDeposit = (txId: string) => {
     setTransactions(prev => prev.map(t => {
-      if (t.id === txId) {
-        setUsers(uList => uList.map(u => {
-          if (u.id === t.userId) return { ...u, balance: u.balance + t.amount };
-          return u;
-        }));
-        return { ...t, status: TransactionStatus.REJECTED };
+      if (t.id === txId && t.status === TransactionStatus.PENDING) {
+        setUsers(uList => uList.map(u => u.id === t.userId ? { ...u, balance: u.balance + t.amount } : u));
+        return { ...t, status: TransactionStatus.COMPLETED };
       }
       return t;
     }));
+  };
+
+  const adminRejectDeposit = (txId: string) => {
+    setTransactions(prev => prev.map(t => t.id === txId ? { ...t, status: TransactionStatus.REJECTED } : t));
   };
 
   const adminUpdateUser = (userId: string, data: Partial<User>) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...data } : u));
   };
 
-  const adminUpdatePlan = (plan: InvestmentPlan) => {
-    setPlans(prev => prev.map(p => p.id === plan.id ? plan : p));
-  };
-
-  const adminDeletePlan = (id: string) => {
-    setPlans(prev => prev.filter(p => p.id !== id));
-  };
-
-  const adminCreatePlan = (planData: Omit<InvestmentPlan, 'id'>) => {
-    const newPlan = { ...planData, id: 'plan_' + Date.now() };
-    setPlans([...plans, newPlan]);
-  };
-
+  const adminUpdatePlan = (plan: InvestmentPlan) => setPlans(prev => prev.map(p => p.id === plan.id ? plan : p));
+  const adminDeletePlan = (id: string) => setPlans(prev => prev.filter(p => p.id !== id));
+  const adminCreatePlan = (planData: Omit<InvestmentPlan, 'id'>) => setPlans([...plans, { ...planData, id: 'plan_' + Date.now() }]);
+  
   const debugTriggerProfit = () => {
-    setInvestments(prev => prev.map(inv => {
-      if (inv.status === 'ACTIVE') {
-        return { ...inv, nextPayout: Date.now() - 1000 };
-      }
-      return inv;
-    }));
-    setTimeout(processProfits, 100);
+    setInvestments(prev => prev.map(inv => inv.status === 'ACTIVE' ? { ...inv, nextPayout: Date.now() - 1000 } : inv));
   };
+
+  const updateSystemIntegration = (config: Partial<SystemIntegration>) => {
+    setSystemIntegration(prev => ({ ...prev, ...config }));
+  };
+
+  if (!isHydrated) {
+    return (
+      <div style={{ backgroundColor: '#0b0e14' }} className="min-h-screen flex flex-col items-center justify-center p-10 text-center space-y-4">
+        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="font-black text-blue-500 uppercase tracking-widest animate-pulse">Establishing Node Link</p>
+      </div>
+    );
+  }
 
   return (
     <AppContext.Provider value={{
-      currentUser, users, plans, investments, transactions, platformStats,
-      login, logout, register, makeDeposit, requestWithdrawal, investInPlan,
-      adminApproveWithdrawal, adminRejectWithdrawal, adminUpdateUser, adminUpdatePlan, adminDeletePlan, adminCreatePlan, debugTriggerProfit
+      currentUser, users, plans, investments, transactions, tickets, platformStats, theme, toggleTheme,
+      toasts, removeToast, addToast, systemIntegration, isHydrated,
+      login, logout, updateProfile, createTicket, register, makeDeposit, requestWithdrawal, investInPlan,
+      adminApproveWithdrawal, adminRejectWithdrawal, adminApproveDeposit, adminRejectDeposit,
+      adminUpdateUser, adminUpdatePlan, adminDeletePlan, adminCreatePlan, debugTriggerProfit,
+      updateSystemIntegration
     }}>
       {children}
     </AppContext.Provider>

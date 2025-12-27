@@ -17,6 +17,24 @@ export enum TransactionType {
   REFERRAL = 'REFERRAL'
 }
 
+export interface SupportTicket {
+  id: string;
+  userId: string;
+  subject: string;
+  message: string;
+  status: 'OPEN' | 'RESOLVED' | 'CLOSED';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  createdAt: number;
+}
+
+export interface LinkedWallet {
+  id: string;
+  type: string; // BTC, ETH, USDT, etc.
+  address: string;
+  label: string;
+  addedAt: number;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -30,6 +48,11 @@ export interface User {
   referredBy?: string;
   createdAt: number;
   isBlocked: boolean;
+  kycLevel: 0 | 1 | 2; // 0: None, 1: Basic, 2: Institutional
+  twoFactorEnabled: boolean;
+  phoneNumber?: string;
+  country?: string;
+  linkedWallets?: LinkedWallet[];
 }
 
 export interface InvestmentPlan {
@@ -47,7 +70,7 @@ export interface Investment {
   userId: string;
   planId: string;
   amount: number;
-  earnedSoFar: number; // Track total profit from this specific investment
+  earnedSoFar: number; 
   startDate: number;
   nextPayout: number;
   totalPayouts: number;

@@ -1,238 +1,219 @@
 
 import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../store/AppContext';
 import { 
   LayoutDashboard, Wallet, Users, ShieldCheck, TrendingUp, 
-  LogOut as LogOutIcon, Menu, X, LayoutGrid, CreditCard, Layers, Settings,
-  Activity, ShieldAlert
+  LogOut as LogOutIcon, Menu, X, LayoutGrid, CreditCard, Layers, Settings as SettingsIcon,
+  ShieldAlert, Sun, Moon, Home, HelpCircle, LifeBuoy, User, Activity, Zap
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
 import { UserRole } from '../types';
+import { ToastContainer } from './ToastContainer';
+import { AIAgent } from './AIAgent';
 
 export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser, logout } = useApp();
+  const { currentUser, logout, theme, toggleTheme, systemIntegration } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   if (!currentUser) return null;
 
   const isAdmin = currentUser.role === UserRole.ADMIN;
   const currentTab = new URLSearchParams(location.search).get('tab') || 'overview';
 
-  const userNavigation = [
-    { name: 'Overview', icon: LayoutDashboard, path: '/dashboard' },
+  const userNavigation: { name: string; icon: any; path: string; id?: string }[] = [
+    { name: 'Home', icon: Home, path: '/dashboard' },
     { name: 'Invest', icon: TrendingUp, path: '/invest' },
-    { name: 'Transactions', icon: Wallet, path: '/transactions' },
-    { name: 'Referrals', icon: Users, path: '/referrals' },
+    { name: 'Wallets', icon: Wallet, path: '/transactions' },
+    { name: 'Network', icon: Users, path: '/referrals' },
+    { name: 'Support', icon: LifeBuoy, path: '/support' },
+    { name: 'Security', icon: SettingsIcon, path: '/settings' },
   ];
 
-  const adminNavigation = [
-    { name: 'Summary', icon: LayoutGrid, path: '/admin?tab=overview', id: 'overview' },
+  const adminNavigation: { name: string; icon: any; path: string; id?: string }[] = [
+    { name: 'Kernel', icon: LayoutGrid, path: '/admin?tab=overview', id: 'overview' },
     { name: 'Payouts', icon: CreditCard, path: '/admin?tab=withdrawals', id: 'withdrawals' },
-    { name: 'Members', icon: Users, path: '/admin?tab=users', id: 'users' },
+    { name: 'Nodes', icon: Users, path: '/admin?tab=users', id: 'users' },
     { name: 'Engine', icon: Layers, path: '/admin?tab=plans', id: 'plans' },
-    { name: 'Kernel', icon: Settings, path: '/admin?tab=system', id: 'system' },
   ];
 
-  const mobileNav = [
-    { name: 'Home', icon: LayoutDashboard, path: isAdmin ? '/admin' : '/dashboard' },
-    ...(!isAdmin ? [
-      { name: 'Invest', icon: TrendingUp, path: '/invest' },
-      { name: 'Finance', icon: Wallet, path: '/transactions' },
-      { name: 'Refs', icon: Users, path: '/referrals' }
-    ] : [
-      { name: 'Admin', icon: ShieldCheck, path: '/admin' }
-    ])
-  ];
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const isActive = (path: string) => location.pathname === path.split('?')[0];
   const isAdminTabActive = (tabId: string) => location.pathname === '/admin' && currentTab === tabId;
 
-  return (
-    <div className="min-h-screen bg-[#0b0e14] flex">
-      {/* Sidebar Mobile Backdrop */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-md" 
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+  const BottomNav = () => {
+    const navItems = isAdmin 
+      ? adminNavigation 
+      : [
+          userNavigation[0], // Home
+          userNavigation[1], // Invest
+          userNavigation[2], // Wallets
+          userNavigation[3], // Network
+          { name: 'Profile', icon: User, path: '/settings' } // Profile
+        ];
+    
+    return (
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[40]">
+        <div className="bg-white/95 dark:bg-brand-dark/95 backdrop-blur-3xl border-t border-slate-200/60 dark:border-white/5 px-2 pb-safe shadow-premium-light dark:shadow-premium-dark transition-all duration-300">
+          <div className="flex items-center justify-around h-20">
+            {navItems.map((item) => {
+              const active = isAdmin ? isAdminTabActive(item.id!) : isActive(item.path);
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  className={`flex-1 flex flex-col items-center justify-center gap-1.5 h-full transition-all duration-300 relative ${
+                    active 
+                      ? 'text-blue-600 dark:text-blue-500' 
+                      : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
+                  }`}
+                >
+                  {active && (
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1 bg-blue-600 dark:bg-blue-500 rounded-b-full shadow-[0_2px_12px_rgba(37,99,235,0.3)] animate-in fade-in slide-in-from-top-1" />
+                  )}
+                  
+                  <div className={`p-2.5 rounded-2xl transition-all duration-500 flex items-center justify-center ${
+                    active ? 'bg-blue-600/10 dark:bg-blue-500/10' : 'bg-transparent'
+                  }`}>
+                    <item.icon className={`w-5 h-5 ${active ? 'stroke-[2.5px]' : 'stroke-[2px]'}`} />
+                  </div>
+                  
+                  <span className={`text-[9px] font-black uppercase tracking-widest transition-opacity duration-300 ${
+                    active ? 'opacity-100' : 'opacity-60'
+                  }`}>
+                    {item.name}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-      {/* Sidebar (Desktop & Mobile Hamburger Drawer) */}
-      <div 
-        className={`fixed inset-y-0 left-0 bg-[#0e121a] border-r border-gray-800 transform ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 transition-all duration-300 z-50 flex flex-col ${
-          isCollapsed ? 'md:w-20' : 'md:w-64'
-        } w-72 shadow-2xl`}
+  const ControlCluster = () => (
+    <div className={`flex items-center gap-1 p-1 rounded-2xl border transition-all duration-300 ${
+      isAdmin 
+        ? 'bg-blue-600/10 border-blue-500/30 shadow-[0_0_15px_rgba(37,99,235,0.1)]' 
+        : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 shadow-sm'
+    }`}>
+      <div className="flex items-center">
+        <button 
+          className="text-slate-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-white transition-all p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 md:hidden active:scale-95" 
+          onClick={() => setSidebarOpen(true)}
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+
+        <button 
+          onClick={() => setIsCollapsed(!isCollapsed)} 
+          className="hidden md:flex p-2.5 text-slate-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-white transition-all rounded-xl hover:bg-slate-50 dark:hover:bg-white/5"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className={`w-px h-4 mx-1 ${isAdmin ? 'bg-blue-500/20' : 'bg-slate-200 dark:bg-white/10'}`} />
+      
+      <button 
+        onClick={toggleTheme} 
+        className="p-2.5 text-slate-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-white transition-all rounded-xl hover:bg-slate-50 dark:hover:bg-white/5"
       >
+        {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-brand-light dark:bg-brand-dark flex flex-col md:flex-row transition-all duration-500">
+      <ToastContainer />
+      {!isAdmin && <AIAgent />}
+      <BottomNav />
+      
+      {sidebarOpen && <div className="fixed inset-0 bg-black/40 dark:bg-black/60 z-40 md:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />}
+      
+      <div className={`fixed inset-y-0 left-0 bg-white dark:bg-brand-darkSecondary border-r border-slate-200/60 dark:border-gray-800 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-all duration-300 z-50 flex flex-col ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-72 shadow-premium-light md:shadow-none`}>
         <div className={`p-6 ${isCollapsed ? 'md:px-4' : ''} flex-1 overflow-y-auto no-scrollbar`}>
           <div className="flex items-center justify-between mb-10">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-900/40 text-white flex-shrink-0">C</div>
-              {!isCollapsed && <span className="font-black text-lg tracking-tighter text-white">CRYPTO<span className="text-blue-500">YIELD</span></span>}
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-500/20 text-white flex-shrink-0">C</div>
+              {!isCollapsed && <span className="font-black text-lg tracking-tighter text-slate-900 dark:text-white uppercase">Crypto<span className="text-blue-500">Yield</span></span>}
             </Link>
-            <button className="md:hidden text-gray-500 hover:text-white" onClick={() => setSidebarOpen(false)}>
-              <X className="w-6 h-6" />
-            </button>
+            <button className="md:hidden text-slate-400 hover:text-slate-900 dark:hover:text-white" onClick={() => setSidebarOpen(false)}><X className="w-6 h-6" /></button>
           </div>
-
+          
           <nav className="space-y-6">
-            {/* Standard User Navigation */}
-            {!isAdmin && (
+            {!isAdmin ? (
               <div className="space-y-1">
-                <p className={`text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-4 ml-4 ${isCollapsed ? 'md:hidden' : ''}`}>Menu</p>
-                {userNavigation.map((item) => {
-                  const active = isActive(item.path);
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.path}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative ${
-                        active 
-                        ? 'bg-blue-600/10 text-blue-500 border border-blue-600/20 shadow-[inset_0_0_15px_rgba(37,99,235,0.05)]' 
-                        : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
-                      } ${isCollapsed ? 'md:justify-center md:px-0' : ''}`}
-                    >
-                      <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-blue-500' : 'text-gray-400 group-hover:text-white'}`} />
-                      {!isCollapsed && <span className="font-bold text-sm">{item.name}</span>}
-                    </Link>
-                  );
-                })}
+                <p className={`text-[10px] font-black text-slate-400 dark:text-gray-600 uppercase tracking-[0.2em] mb-4 ml-4 ${isCollapsed ? 'md:hidden' : ''}`}>Navigation</p>
+                {userNavigation.map((item) => (
+                  <Link key={item.name} to={item.path} onClick={() => setSidebarOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative ${isActive(item.path) ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent'} ${isCollapsed ? 'md:justify-center md:px-0' : ''}`}>
+                    <item.icon className={`w-5 h-5 flex-shrink-0`} />
+                    {!isCollapsed && <span className="font-bold text-sm">{item.name}</span>}
+                  </Link>
+                ))}
               </div>
-            )}
-
-            {/* Admin Navigation */}
-            {isAdmin && (
+            ) : (
               <div className="space-y-1">
-                <p className={`text-[10px] font-black text-blue-500/60 uppercase tracking-[0.2em] mb-4 ml-4 flex items-center gap-2 ${isCollapsed ? 'md:hidden' : ''}`}>
-                   <ShieldAlert className="w-3 h-3" /> Platform Control
-                </p>
-                {adminNavigation.map((item) => {
-                  const active = isAdminTabActive(item.id);
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.path}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative ${
-                        active 
-                        ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/40 border border-blue-500' 
-                        : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
-                      } ${isCollapsed ? 'md:justify-center md:px-0' : ''}`}
-                    >
-                      <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
-                      {!isCollapsed && <span className="font-bold text-sm">{item.name}</span>}
-                      {active && !isCollapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_white]" />}
-                    </Link>
-                  );
-                })}
+                <p className={`text-[10px] font-black text-blue-500/60 uppercase tracking-[0.2em] mb-4 ml-4 flex items-center gap-2 ${isCollapsed ? 'md:hidden' : ''}`}><ShieldAlert className="w-3 h-3" /> Admin Ops</p>
+                {adminNavigation.map((item) => (
+                  <Link key={item.name} to={item.path} onClick={() => setSidebarOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative ${isAdminTabActive(item.id!) ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30' : 'text-slate-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent'} ${isCollapsed ? 'md:justify-center md:px-0' : ''}`}>
+                    <item.icon className={`w-5 h-5 flex-shrink-0`} />
+                    {!isCollapsed && <span className="font-bold text-sm">{item.name}</span>}
+                  </Link>
+                ))}
               </div>
             )}
           </nav>
         </div>
 
-        {/* User Profile Info Footer (Sidebar) */}
-        <div className={`mt-auto p-6 border-t border-gray-800 mb-24 md:mb-0 hidden md:block ${isCollapsed ? 'md:px-4' : ''}`}>
-           <div className={`flex items-center gap-3 px-4 py-3 bg-blue-600/5 rounded-2xl border border-white/5 overflow-hidden transition-all duration-300 ${isCollapsed ? 'md:px-2 md:justify-center' : ''}`}>
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0 overflow-hidden shadow-lg">
-                {currentUser.avatar ? (
-                  <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
-                ) : (
-                  currentUser.name[0]
-                )}
-              </div>
-              {!isCollapsed && (
-                <div className="flex flex-col min-w-0">
-                   <span className="text-sm font-bold text-white truncate">{currentUser.name}</span>
-                   <span className="text-[10px] text-gray-500 truncate uppercase tracking-tighter font-black">{currentUser.role}</span>
-                </div>
-              )}
-           </div>
+        <div className={`mt-auto p-6 border-t border-slate-200 dark:border-gray-800 ${isCollapsed ? 'md:px-4' : ''}`}>
+           <button onClick={handleLogout} className={`w-full flex items-center gap-3 px-4 py-3 text-slate-400 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all ${isCollapsed ? 'justify-center px-0' : ''}`}>
+              <LogOutIcon className="w-5 h-5 flex-shrink-0" />
+              {!isCollapsed && <span className="font-bold text-sm">Sign Out</span>}
+           </button>
         </div>
       </div>
 
-      {/* Main Content Area */}
       <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
-        <header className="h-20 bg-[#0e121a]/80 backdrop-blur-xl sticky top-0 border-b border-gray-800 px-6 flex items-center justify-between z-30">
+        <header className="h-20 bg-white/80 dark:bg-brand-dark/80 backdrop-blur-xl sticky top-0 border-b border-slate-200 dark:border-gray-800 px-6 flex items-center justify-between z-30 transition-all duration-500">
           <div className="flex items-center gap-4">
-            <button 
-              className="md:hidden text-gray-400 hover:text-white transition-colors p-2 bg-white/5 rounded-lg"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            
-            <button 
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden md:flex p-2 text-gray-500 hover:text-white bg-white/5 rounded-lg transition-colors"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-
+            <ControlCluster />
             <div className="hidden sm:block ml-2">
-               <h2 className="text-sm font-black text-white truncate max-w-[150px] md:max-w-none">Welcome, {currentUser.name}</h2>
-               <p className="text-[9px] text-gray-500 uppercase font-black tracking-[0.2em]">{currentUser.role} SECURITY LEVEL</p>
+              <h2 className="text-sm font-black text-slate-900 dark:text-white truncate">{isAdmin ? 'ROOT KERNEL: ' : 'NODE: '} {currentUser.name}</h2>
+              <div className="flex items-center gap-2">
+                <p className="text-[9px] text-slate-500 dark:text-gray-500 uppercase font-black tracking-[0.2em]">{isAdmin ? 'Full Protocol Authority' : 'Level 7 Clearance Verified'}</p>
+                {systemIntegration.isLive && (
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[8px] font-black uppercase tracking-widest animate-pulse shadow-lg shadow-emerald-500/30">
+                    <Activity className="w-2.5 h-2.5" /> LIVE
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-3 md:gap-6">
-            <div className="hidden md:flex flex-col items-end mr-4">
-               <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Liquid Balance</span>
-               <span className="text-sm font-black text-emerald-500 font-mono">${currentUser.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="hidden md:flex flex-col items-end mr-1 text-right">
+              <span className="text-[10px] font-black text-slate-400 dark:text-gray-600 uppercase tracking-widest leading-none mb-1">{isAdmin ? 'SYSTEM TVL' : 'TOTAL LIQUIDITY'}</span>
+              <span className={`text-sm font-black font-mono leading-none ${isAdmin ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-500'}`}>${(currentUser.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
-
-            <button 
-              onClick={logout}
-              className="p-2.5 text-gray-500 hover:text-red-500 bg-white/5 hover:bg-red-500/10 rounded-xl transition-all border border-white/5 group order-last md:order-none"
-              title="Sign Out"
-            >
-              <LogOutIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            </button>
-
-            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-sm border-2 border-white/5 shadow-lg flex-shrink-0 overflow-hidden">
-              {currentUser.avatar ? (
-                <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
-              ) : (
-                currentUser.name[0]
-              )}
+            <div className="flex items-center gap-2 md:gap-3 pl-2 md:pl-4 border-l border-slate-200 dark:border-white/10">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 shadow-lg flex-shrink-0 overflow-hidden ${isAdmin ? 'bg-amber-600 border-amber-500/30' : 'bg-blue-600 border-white/10'}`}>
+                {currentUser.avatar ? <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" /> : currentUser.name[0]}
+              </div>
+              <button onClick={handleLogout} className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all active:scale-90"><LogOutIcon className="w-5 h-5" /></button>
             </div>
           </div>
         </header>
-
-        <main className="p-6 md:p-10 max-w-7xl mx-auto pb-28 md:pb-10">
+        <main className="p-4 md:p-10 pb-32 md:pb-10 max-w-7xl mx-auto min-h-[calc(100vh-80px)] transition-all">
           {children}
         </main>
-      </div>
-
-      {/* Mobile Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 pointer-events-none">
-        <div className="bg-[#0e121a]/95 backdrop-blur-3xl border border-white/10 rounded-[32px] h-20 flex items-center justify-around px-2 shadow-[0_-20_50px_-12px_rgba(0,0,0,0.8)] pointer-events-auto">
-          {mobileNav.map((item) => {
-            const active = isActive(item.path);
-            return (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-all active:scale-95 ${
-                  active ? 'text-blue-500' : 'text-gray-500'
-                }`}
-              >
-                <div className={`relative p-2 rounded-2xl transition-all duration-300 ${active ? 'bg-blue-600/10' : ''}`}>
-                  <item.icon className={`w-5 h-5 ${active ? 'fill-blue-500/10' : ''}`} />
-                  {active && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_12px_rgba(59,130,246,1)]" />
-                  )}
-                </div>
-                <span className={`text-[9px] font-black uppercase tracking-tight transition-all ${active ? 'opacity-100' : 'opacity-60'}`}>
-                  {item.name}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
       </div>
     </div>
   );

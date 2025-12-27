@@ -44,17 +44,23 @@ export const MOCK_USERS: User[] = [
     referralCode: 'ADMIN_PLATINUM',
     createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
     isBlocked: false,
+    // Fix: Adding missing properties required by the User interface in types.ts
+    kycLevel: 1,
+    twoFactorEnabled: false,
   },
   {
     id: 'user_1',
     email: 'demo@user.com',
     name: 'John Doe',
     role: UserRole.USER,
-    balance: 5000,
+    balance: 5,
     totalInvested: 1200,
     totalWithdrawn: 450,
     referralCode: 'JOHNDOE77',
     createdAt: Date.now() - 15 * 24 * 60 * 60 * 1000,
     isBlocked: false,
+    // Fix: Adding missing properties required by the User interface in types.ts
+    kycLevel: 1,
+    twoFactorEnabled: false,
   }
 ];
