@@ -1,5 +1,5 @@
 
-import { InvestmentPlan, User, UserRole } from './types';
+import { InvestmentPlan, User, UserRole } from './types.ts';
 
 export const INITIAL_PLANS: InvestmentPlan[] = [
   {
@@ -44,9 +44,10 @@ export const MOCK_USERS: User[] = [
     referralCode: 'ADMIN_PLATINUM',
     createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
     isBlocked: false,
-    // Fix: Adding missing properties required by the User interface in types.ts
-    kycLevel: 1,
-    twoFactorEnabled: false,
+    kycLevel: 2,
+    // Fixed: Added missing kycStatus property
+    kycStatus: 'VERIFIED',
+    twoFactorEnabled: true,
   },
   {
     id: 'user_1',
@@ -59,8 +60,9 @@ export const MOCK_USERS: User[] = [
     referralCode: 'JOHNDOE77',
     createdAt: Date.now() - 15 * 24 * 60 * 60 * 1000,
     isBlocked: false,
-    // Fix: Adding missing properties required by the User interface in types.ts
     kycLevel: 1,
+    // Fixed: Added missing kycStatus property
+    kycStatus: 'VERIFIED',
     twoFactorEnabled: false,
   }
 ];

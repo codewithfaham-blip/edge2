@@ -53,11 +53,11 @@ export const ReferralsPage = () => {
             Elite Affiliate Protocol
           </div>
 
-          <h2 className="text-3xl md:text-5xl font-black mb-6 tracking-tighter text-slate-900 dark:text-white leading-none uppercase">
+          <h2 className="text-4xl md:text-7xl font-black mb-6 tracking-tighter text-slate-900 dark:text-white leading-none uppercase">
             Build Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">Wealth Network</span>
           </h2>
           
-          <p className="text-base text-slate-500 dark:text-gray-400 mb-14 max-w-2xl mx-auto md:text-lg leading-relaxed font-medium">
+          <p className="text-slate-500 dark:text-gray-400 mb-14 max-w-2xl mx-auto text-lg leading-relaxed font-medium">
             Invite your inner circle to the future of automated yields. Earn institutional-grade commissions for every verified member you onboard.
           </p>
 
@@ -93,8 +93,8 @@ export const ReferralsPage = () => {
           <div className="relative">
             <p className="text-slate-400 dark:text-gray-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">Network Nodes</p>
             <div className="flex items-end gap-3">
-              <span className="text-4xl md:text-5xl font-black font-mono text-slate-900 dark:text-white tracking-tighter">0</span>
-              <span className="text-blue-600 dark:text-blue-500 font-black text-[10px] mb-2 uppercase tracking-widest">+0 Cycle</span>
+              <span className="text-6xl font-black font-mono text-slate-900 dark:text-white tracking-tighter">0</span>
+              <span className="text-blue-600 dark:text-blue-500 font-black text-xs mb-2 uppercase tracking-widest">+0 Cycle</span>
             </div>
             <p className="text-[10px] text-slate-400 dark:text-gray-600 mt-6 uppercase font-black tracking-widest">Verified Global Associates</p>
           </div>
@@ -107,8 +107,8 @@ export const ReferralsPage = () => {
           <div className="relative">
             <p className="text-slate-400 dark:text-gray-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">Network Dividends</p>
             <div className="flex items-end gap-3">
-              <span className="text-4xl md:text-5xl font-black font-mono text-emerald-600 dark:text-emerald-500 tracking-tighter">$0.00</span>
-              <span className="text-slate-400 dark:text-gray-600 font-black text-[10px] mb-2 uppercase tracking-widest">Settled</span>
+              <span className="text-6xl font-black font-mono text-emerald-600 dark:text-emerald-500 tracking-tighter">$0.00</span>
+              <span className="text-slate-400 dark:text-gray-600 font-black text-xs mb-2 uppercase tracking-widest">Settled</span>
             </div>
             <p className="text-[10px] text-slate-400 dark:text-gray-600 mt-6 uppercase font-black tracking-widest">Instant Liquidity Payouts</p>
           </div>
@@ -118,8 +118,8 @@ export const ReferralsPage = () => {
       {/* How it Works Section */}
       <div className="space-y-10">
         <div className="text-center">
-          <h3 className="text-2xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">Simplified Growth Vector</h3>
-          <p className="text-sm text-slate-500 dark:text-gray-500 font-medium mt-2">Scale your reach in three strategic phases.</p>
+          <h3 className="text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">Simplified Growth Vector</h3>
+          <p className="text-slate-500 dark:text-gray-500 font-medium mt-2">Scale your reach in three strategic phases.</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
@@ -152,13 +152,13 @@ export const ReferralsPage = () => {
              <TrendingUp className="w-12 h-12 text-white" />
           </div>
           <div>
-            <h4 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter">Current Multiplier: <span className="text-blue-600 dark:text-blue-500 tracking-widest">ALPHA</span></h4>
-            <p className="text-sm text-slate-500 dark:text-gray-400 font-bold max-w-sm">You are on the Standard Tier. Maintain 10 active nodes to unlock the <b>7% PLATINUM</b> protocol.</p>
+            <h4 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter">Current Multiplier: <span className="text-blue-600 dark:text-blue-500 tracking-widest">ALPHA</span></h4>
+            <p className="text-slate-500 dark:text-gray-400 font-bold max-w-sm">You are on the Standard Tier. Maintain 10 active nodes to unlock the <b>7% PLATINUM</b> protocol.</p>
           </div>
         </div>
         <div className="flex flex-col items-center md:items-end bg-white dark:bg-black/20 p-8 rounded-[32px] border border-slate-100 dark:border-white/5 shadow-inner min-w-[180px]">
-          <div className="text-4xl font-black font-mono text-blue-600 dark:text-blue-500 mb-1">5.0%</div>
-          <div className="text-[9px] font-black text-slate-400 dark:text-gray-600 uppercase tracking-[0.3em]">Instant Payout</div>
+          <div className="text-5xl font-black font-mono text-blue-600 dark:text-blue-500 mb-1">5.0%</div>
+          <div className="text-[10px] font-black text-slate-400 dark:text-gray-600 uppercase tracking-[0.3em]">Instant Payout</div>
         </div>
       </div>
     </div>

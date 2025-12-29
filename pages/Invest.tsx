@@ -34,8 +34,8 @@ export const InvestPage = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-500">
       <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Investment Strategies</h2>
-        <p className="text-sm text-slate-500 dark:text-gray-400 font-medium mt-2">Select a package and start growing your digital portfolio today.</p>
+        <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Investment Strategies</h2>
+        <p className="text-slate-500 dark:text-gray-400 font-medium mt-2">Select a package and start growing your digital portfolio today.</p>
       </div>
 
       {success && (
@@ -59,9 +59,9 @@ export const InvestPage = () => {
               : 'bg-brand-lightSecondary dark:bg-brand-darkSecondary border-slate-200 dark:border-gray-800 hover:border-blue-400 dark:hover:border-blue-500/50 shadow-sm'
             }`}
           >
-            <h3 className="font-black text-base mb-2 uppercase tracking-tight text-slate-900 dark:text-white">{plan.name}</h3>
-            <p className="text-3xl font-black text-blue-600 dark:text-blue-500 mb-6 font-mono tracking-tighter">
-              {plan.roi}% <span className="text-[9px] font-black text-slate-400 dark:text-gray-500 block uppercase tracking-widest mt-1">/ Per Day</span>
+            <h3 className="font-black text-lg mb-2 uppercase tracking-tight text-slate-900 dark:text-white">{plan.name}</h3>
+            <p className="text-4xl font-black text-blue-600 dark:text-blue-500 mb-6 font-mono tracking-tighter">
+              {plan.roi}% <span className="text-[10px] font-black text-slate-400 dark:text-gray-500 block uppercase tracking-widest mt-1">/ Per Day</span>
             </p>
             <div className="space-y-3 text-xs">
               <div className="flex justify-between font-bold">
@@ -88,8 +88,8 @@ export const InvestPage = () => {
               <ShieldCheck className="w-8 h-8" />
             </div>
             <div>
-              <h3 className="font-black text-xl uppercase tracking-tighter text-slate-900 dark:text-white">Protocol Configuration</h3>
-              <p className="text-xs text-slate-500 dark:text-gray-500 font-medium">Calibrate your asset allocation parameters.</p>
+              <h3 className="font-black text-2xl uppercase tracking-tighter text-slate-900 dark:text-white">Protocol Configuration</h3>
+              <p className="text-sm text-slate-500 dark:text-gray-500 font-medium">Calibrate your asset allocation parameters.</p>
             </div>
           </div>
 
@@ -133,7 +133,7 @@ export const InvestPage = () => {
 
           <button 
             onClick={handleInvest}
-            className="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-[24px] font-black text-lg shadow-2xl shadow-blue-900/40 transition-all hover:-translate-y-1 active:scale-95 uppercase tracking-widest"
+            className="w-full py-6 bg-blue-600 hover:bg-blue-700 text-white rounded-[28px] font-black text-xl shadow-2xl shadow-blue-900/40 transition-all hover:-translate-y-1 active:scale-95 uppercase tracking-widest"
           >
             Authorize ROI Contract
           </button>

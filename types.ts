@@ -17,6 +17,8 @@ export enum TransactionType {
   REFERRAL = 'REFERRAL'
 }
 
+export type KycStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+
 export interface SupportTicket {
   id: string;
   userId: string;
@@ -29,7 +31,7 @@ export interface SupportTicket {
 
 export interface LinkedWallet {
   id: string;
-  type: string; // BTC, ETH, USDT, etc.
+  type: string;
   address: string;
   label: string;
   addedAt: number;
@@ -48,7 +50,8 @@ export interface User {
   referredBy?: string;
   createdAt: number;
   isBlocked: boolean;
-  kycLevel: 0 | 1 | 2; // 0: None, 1: Basic, 2: Institutional
+  kycLevel: 0 | 1 | 2;
+  kycStatus: KycStatus;
   twoFactorEnabled: boolean;
   phoneNumber?: string;
   country?: string;
@@ -60,7 +63,7 @@ export interface InvestmentPlan {
   name: string;
   minAmount: number;
   maxAmount: number;
-  roi: number; // Percentage
+  roi: number;
   period: 'DAILY' | 'HOURLY' | 'WEEKLY';
   durationDays: number;
 }
@@ -86,4 +89,13 @@ export interface Transaction {
   date: number;
   method?: string;
   details?: string;
+  proofFile?: string; // Stores filename of uploaded proof (rar/zip/pdf)
+}
+
+export interface CoinData {
+  id: string;
+  symbol: string;
+  name: string;
+  price: number;
+  change24h: number;
 }

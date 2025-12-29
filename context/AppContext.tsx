@@ -159,8 +159,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       email, name, role: UserRole.USER, balance: 5, 
       totalInvested: 0, totalWithdrawn: 0, referralCode: norm,
       createdAt: Date.now(), isBlocked: false,
-      // Fix: Adding missing required User properties based on the interface in types/index.ts
+      // Fixed: Adding missing required User properties
       kycLevel: 0,
+      kycStatus: 'UNVERIFIED',
       twoFactorEnabled: false,
       referredBy: referrerCode ? users.find(u => u.referralCode === referrerCode.trim().toUpperCase())?.id : undefined
     };

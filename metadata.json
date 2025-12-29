@@ -1,6 +1,6 @@
 {
   "name": "CryptoYield - Premium HYIP Platform",
-  "description": "A fully functional high-yield investment program platform simulator featuring user dashboards, admin panels, mock transaction processing, and real-time profit tracking with a sleek crypto-inspired UI.",
+  "description": "Institutional-grade high-yield investment program platform simulator featuring user dashboards, admin panels, and real-time profit tracking.",
   "requestFramePermissions": [
     "geolocation"
   ]

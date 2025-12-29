@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
-import { useApp } from '../store/AppContext';
+import { useApp } from '../store/AppContext.tsx';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldCheck, Mail, Lock, User, ArrowRight, Copy, Check, Share2, AtSign } from 'lucide-react';
-import { PublicNavbar } from './Navbar';
+import { PublicNavbar } from './Navbar.tsx';
 
 export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => {
   const { login, register } = useApp();
@@ -10,7 +11,7 @@ export const AuthForm: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    userId: '', // New field for user-defined ID / Referral Code
+    userId: '', 
     password: '',
     referralCode: '',
   });

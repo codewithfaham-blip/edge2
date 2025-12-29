@@ -12,6 +12,7 @@ import { SupportPage } from './pages/Support.tsx';
 import { SettingsPage } from './pages/Settings.tsx';
 import { AuthForm } from './components/Auth.tsx';
 import { DashboardLayout } from './components/Layout.tsx';
+import { PublicPlansPage } from './pages/PublicPlans.tsx';
 import { UserRole } from './types.ts';
 
 const RouteWrapper: React.FC<{ 
@@ -20,8 +21,10 @@ const RouteWrapper: React.FC<{
   adminOnly?: boolean;
   userOnly?: boolean;
 }> = ({ children, isPrivate, adminOnly, userOnly }) => {
-  const { currentUser } = useApp();
+  const { currentUser, isHydrated } = useApp();
   
+  if (!isHydrated) return null;
+
   if (isPrivate && !currentUser) {
     return <Navigate to="/login" replace />;
   }
@@ -42,7 +45,16 @@ const RouteWrapper: React.FC<{
 };
 
 const AppRoutes = () => {
-  const { currentUser } = useApp();
+  const { currentUser, isHydrated } = useApp();
+
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen bg-[#0b0e14] flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="font-black text-blue-500 tracking-widest text-xs uppercase animate-pulse">Initializing Kernel...</p>
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -56,6 +68,7 @@ const AppRoutes = () => {
       
       <Route path="/login" element={currentUser ? <Navigate to="/" replace /> : <AuthForm mode="login" />} />
       <Route path="/register" element={currentUser ? <Navigate to="/" replace /> : <AuthForm mode="register" />} />
+      <Route path="/public-plans" element={<PublicPlansPage />} />
       
       <Route path="/dashboard" element={
         <RouteWrapper isPrivate userOnly>

@@ -1,15 +1,15 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useApp } from '../store/AppContext';
+import { useApp } from '../store/AppContext.tsx';
 import { 
   LayoutDashboard, Wallet, Users, ShieldCheck, TrendingUp, 
   LogOut as LogOutIcon, Menu, X, LayoutGrid, CreditCard, Layers, Settings as SettingsIcon,
   ShieldAlert, Sun, Moon, Home, HelpCircle, LifeBuoy, User, Activity, Zap
 } from 'lucide-react';
-import { UserRole } from '../types';
-import { ToastContainer } from './ToastContainer';
-import { AIAgent } from './AIAgent';
+import { UserRole } from '../types.ts';
+import { ToastContainer } from './ToastContainer.tsx';
+import { AIAgent } from './AIAgent.tsx';
 
 export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, logout, theme, toggleTheme, systemIntegration } = useApp();
@@ -51,11 +51,11 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     const navItems = isAdmin 
       ? adminNavigation 
       : [
-          userNavigation[0], // Home
-          userNavigation[1], // Invest
-          userNavigation[2], // Wallets
-          userNavigation[3], // Network
-          { name: 'Profile', icon: User, path: '/settings' } // Profile
+          userNavigation[0], 
+          userNavigation[1], 
+          userNavigation[2], 
+          userNavigation[3], 
+          { name: 'Profile', icon: User, path: '/settings' } 
         ];
     
     return (
